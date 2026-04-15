@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-business-cockpit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dashboard workspace with Feishu sync, data builders, and static server",
+  "scripts": {
+    "sync": "node sync_danhao.js",
+    "build:dashboard": "node build_dashboard_data.js",
+    "build:customer": "node build_customer_action_data.js",
+    "build": "npm run build:dashboard && npm run build:customer",
+    "refresh": "npm run sync && npm run build",
+    "serve": "node server.js"
+  }
+}

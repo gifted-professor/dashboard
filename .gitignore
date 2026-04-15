@@ -1,0 +1,22 @@
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Local source configuration
+config/sources.local.json
+
+# Generated data
+orders_live.json
+orders_realtime.json
+dashboard_data.json
+customer_action_data.json
+birthday_members.json
+full_orders.json
+danhaodata.json
+*.tmp.json
+
+# Node / OS artifacts
+node_modules/
+.DS_Store
+*.log

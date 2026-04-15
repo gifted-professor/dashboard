@@ -1,0 +1,23 @@
+{
+  "profile": "optional-if-you-use-LARK_PROFILE-in-env",
+  "sources": {
+    "full": {
+      "label": "账单汇总_全部/汇总(全部)",
+      "baseToken": "replace-with-your-base-token",
+      "tableId": "replace-with-your-table-id",
+      "viewId": null
+    },
+    "realtime": {
+      "label": "单号查询/库存管理/实时视图",
+      "baseToken": "replace-with-your-base-token",
+      "tableId": "replace-with-your-table-id",
+      "viewId": "replace-with-your-view-id"
+    },
+    "birthday": {
+      "label": "单号查询/会员生日",
+      "baseToken": "replace-with-your-base-token",
+      "tableId": "replace-with-your-table-id",
+      "viewId": "replace-with-your-view-id"
+    }
+  }
+}

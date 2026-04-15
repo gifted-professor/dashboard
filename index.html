@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>经营驾驶舱 · 老板</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg-deep: #f4ead7;
+  --bg: #fbf4e6;
+  --surface: #fff8ed;
+  --surface-elevated: #f1e4cd;
+  --border: #d7c2a2;
+  --gold: #c96a2b;
+  --gold-dim: rgba(201, 106, 43, 0.14);
+  --jade: #7b8b5a;
+  --jade-dim: rgba(123, 139, 90, 0.14);
+  --crimson: #a94a3b;
+  --crimson-dim: rgba(169, 74, 59, 0.12);
+  --amber: #d38a2c;
+  --amber-dim: rgba(211, 138, 44, 0.12);
+  --steel: #8f7c67;
+  --text: #3f3426;
+  --text-mid: #6c5b49;
+  --text-dim: #8f7c67;
+  --text-faint: #b79f84;
+  --serif: 'Noto Serif SC', serif;
+  --sans: 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  mix-blend-mode: multiply;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 900px 640px at 12% 12%, rgba(201, 106, 43, 0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 700px 540px at 82% 68%, rgba(211, 138, 44, 0.04) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px 120px;
+}
+
+/* Masthead */
+.masthead {
+  padding: 48px 0 36px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+}
+
+.masthead-overline {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.masthead h1 {
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  background: linear-gradient(160deg, #4a3b2b 0%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.masthead-subtitle {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--text-mid);
+  margin-top: 6px;
+}
+
+.masthead-right { text-align: right; }
+
+.masthead-date {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.masthead-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--jade);
+  border-radius: 50%;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.5); opacity: 1; }
+  50% { box-shadow: 0 0 0 8px rgba(45, 212, 168, 0); opacity: 0.6; }
+}
+
+.live-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--jade);
+  letter-spacing: 1px;
+}
+
+/* Shared Inputs */
+.search-input {
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--gold); }
+.search-input::placeholder { color: var(--text-dim); }
+
+.search-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 2px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.search-btn:hover { opacity: 0.85; }
+
+.search-results {
+  margin-top: 16px;
+  display: none;
+}
+
+.search-results.active { display: block; }
+
+.search-summary {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.search-table-wrap {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Section Nav */
+.section-nav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 36px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-btn {
+  padding: 14px 28px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.5px;
+}
+
+.section-btn:hover { color: var(--text-mid); }
+.section-btn.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(201, 106, 43, 0.06); }
+
+.section-btn .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--crimson-dim);
+  color: var(--crimson);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+.section-btn.active .count {
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+
+/* Sections */
+.section { display: none; }
+.section.active { display: block; animation: fadeUp 0.5s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* KPI Row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.kpi {
+  background: var(--bg);
+  padding: 24px 28px;
+  position: relative;
+}
+
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.kpi:hover::before { opacity: 1; }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.kpi-value {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.kpi-value.gold { color: var(--gold); }
+.kpi-value.jade { color: var(--jade); }
+.kpi-value.crimson { color: var(--crimson); }
+.kpi-value.amber { color: var(--amber); }
+
+.kpi-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+.kpi-meta .up { color: var(--jade); }
+.kpi-meta .down { color: var(--crimson); }
+.kpi-meta .warn { color: var(--amber); }
+
+/* Panels */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(125, 94, 56, 0.06);
+}
+
+.panel-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-title .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+
+.dot.gold { background: var(--gold); }
+.dot.crimson { background: var(--crimson); }
+.dot.jade { background: var(--jade); }
+.dot.steel { background: var(--steel); }
+
+.panel-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 10px;
+}
+
+.panel-badge.crimson { background: var(--crimson-dim); color: var(--crimson); }
+.panel-badge.amber { background: var(--amber-dim); color: var(--amber); }
+.panel-badge.jade { background: var(--jade-dim); color: var(--jade); }
+
+.panel-body { padding: 24px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+.chart-wrap { position: relative; height: 280px; }
+.chart-wrap-sm { position: relative; height: 220px; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+thead th {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+tbody tr:hover { background: rgba(201, 106, 43, 0.07); }
+tbody tr:last-child td { border-bottom: none; }
+
+/* Sortable headers */
+th.sortable { cursor: pointer; user-select: none; transition: color 0.2s; }
+th.sortable:hover { color: var(--gold); }
+th.sortable .arrow { font-size: 10px; margin-left: 4px; opacity: 0.3; transition: opacity 0.2s; }
+th.sortable.active .arrow { opacity: 1; color: var(--gold); }
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.tag-danger { background: var(--crimson-dim); color: var(--crimson); }
+.tag-warn { background: var(--amber-dim); color: var(--amber); }
+.tag-ok { background: var(--jade-dim); color: var(--jade); }
+.tag-steel { background: rgba(92,107,127,0.2); color: var(--steel); }
+
+/* Alert blocks */
+.alert {
+  padding: 16px 20px;
+  border-left: 3px solid;
+  margin-bottom: 12px;
+}
+
+.alert-danger { background: var(--crimson-dim); border-left-color: var(--crimson); }
+.alert-warn { background: var(--amber-dim); border-left-color: var(--amber); }
+.alert-info { background: var(--gold-dim); border-left-color: var(--gold); }
+.alert-jade { background: var(--jade-dim); border-left-color: var(--jade); }
+
+.alert-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.alert-body {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+/* Employee cards */
+.emp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.emp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px;
+  transition: all 0.25s;
+}
+
+.emp-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+
+.emp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.emp-name { font-family: var(--serif); font-size: 20px; font-weight: 700; }
+
+.emp-load {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+}
+
+.emp-load.high { background: var(--crimson-dim); color: var(--crimson); }
+.emp-load.med { background: var(--amber-dim); color: var(--amber); }
+.emp-load.low { background: var(--jade-dim); color: var(--jade); }
+
+.emp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.emp-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.emp-stat-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.emp-stat-value.danger { color: var(--crimson); }
+.emp-stat-value.ok { color: var(--jade); }
+
+.emp-bar {
+  margin-top: 16px;
+  height: 4px;
+  background: var(--bg-deep);
+}
+
+.emp-bar-fill {
+  height: 100%;
+  transition: width 1.2s ease;
+}
+
+.emp-bar-fill.danger { background: var(--crimson); }
+.emp-bar-fill.warn { background: var(--amber); }
+.emp-bar-fill.ok { background: var(--jade); }
+
+/* Customer pools */
+.pool-row {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.pool-row.r5 { grid-template-columns: repeat(5, 1fr); }
+.pool-row.r2 { grid-template-columns: 1fr 1fr; }
+
+.pool-cell {
+  background: var(--bg);
+  padding: 20px;
+  text-align: center;
+}
+
+.pool-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.pool-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Action list */
+.action-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.action-item:last-child { border-bottom: none; }
+
+.action-num {
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 700;
+  min-width: 36px;
+}
+
+.action-num.p1 { color: var(--crimson); }
+.action-num.p2 { color: var(--amber); }
+.action-num.p3 { color: var(--jade); }
+
+.action-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.action-desc {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+/* Footer */
+.footer {
+  margin-top: 60px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  letter-spacing: 1px;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .emp-cards { grid-template-columns: 1fr; }
+  .pool-row.r5 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .wrapper { padding: 0 16px 80px; }
+  .masthead { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .masthead h1 { font-size: 28px; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .pool-row.r5 { grid-template-columns: repeat(2, 1fr); }
+  .section-nav { overflow-x: auto; }
+  .section-btn { white-space: nowrap; }
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div>
+      <div class="masthead-overline">Business Cockpit</div>
+      <h1>经营驾驶舱</h1>
+      <div class="masthead-subtitle" id="dataDate">加载中...</div>
+    </div>
+    <div class="masthead-right">
+      <div class="masthead-date" id="todayDate">--</div>
+      <div class="masthead-live">
+        <span class="live-dot"></span>
+        <span class="live-text">LIVE</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section Nav -->
+  <nav class="section-nav">
+    <button class="section-btn active" data-section="orders">📋 单号查询</button>
+    <button class="section-btn" data-section="daily">经营总览</button>
+    <button class="section-btn" data-section="risk">风险雷达 <span class="count">6</span></button>
+    <button class="section-btn" data-section="team">核心团队</button>
+    <button class="section-btn" data-section="customer">客户库</button>
+    <button class="section-btn" data-section="action">本周行动</button>
+  </nav>
+
+  <!-- ═══════════════ ORDERS (单号查询) ═══════════════ -->
+  <section class="section active" id="sec-orders">
+    <div id="ordersLoading" class="loading">正在加载订单数据...</div>
+    <div id="ordersContent" style="display:none">
+      
+      <!-- Search & Filter Bar -->
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <input type="text" class="search-input" id="orderSearch" placeholder="输入即搜即现..." style="flex:1;min-width:200px" autocomplete="off">
+        <select id="orderFilter" style="padding:12px 16px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:13px;border-radius:2px" onchange="filterOrders()">
+          <option value="all">全部订单</option>
+          <option value="today">今天</option>
+          <option value="week">本周</option>
+          <option value="month">本月</option>
+          <option value="return">有退货</option>
+          <option value="unpaid">未打款</option>
+        </select>
+        <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="clearOrderFilter()">重置</button>
+      </div>
+      
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span class="search-summary" id="orderSummary">加载中...</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)" id="orderSyncTime">--</span>
+      </div>
+      
+      <!-- Orders Table -->
+      <div style="max-height:70vh;overflow-y:auto;border:1px solid var(--border);border-radius:2px">
+        <table>
+          <thead style="position:sticky;top:0;z-index:10">
+            <tr>
+              <th class="sortable" data-table="orders" data-field="customer_name" onclick="sortOrders('customer_name')">客户名 <span class="arrow"></span></th>
+              <th>货品名</th>
+              <th class="sortable" data-table="orders" data-field="employee" onclick="sortOrders('employee')">员工 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="factory" onclick="sortOrders('factory')">厂家 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="tracking_no" onclick="sortOrders('tracking_no')">单号 <span class="arrow"></span></th>
+              <th>平台</th>
+              <th class="sortable" data-table="orders" data-field="revenue" onclick="sortOrders('revenue')">收款 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="cost" onclick="sortOrders('cost')">成本 <span class="arrow"></span></th>
+              <th>状态</th>
+              <th class="sortable" data-table="orders" data-field="pay_date" onclick="sortOrders('pay_date')">付款日期 <span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="orderBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:center">
+        <button class="search-btn" id="orderMoreBtn" style="background:var(--surface);color:var(--text);border:1px solid var(--border);display:none" onclick="showMoreOrders()">显示更多订单</button>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- ═══════════════ DAILY ═══════════════ -->
+  <section class="section" id="sec-daily">
+    <div id="dailyLoading" class="loading">正在加载实时数据...</div>
+    <div id="dailyContent" style="display:none">
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">14天总订单</div>
+          <div class="kpi-value" id="d_orders">--</div>
+          <div class="kpi-meta" id="d_orders_sub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">14天总收入</div>
+          <div class="kpi-value gold" id="d_revenue">--</div>
+          <div class="kpi-meta" id="d_revenue_sub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">14天退货</div>
+          <div class="kpi-value amber" id="d_returns">--</div>
+          <div class="kpi-meta" id="d_returns_sub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">退货率</div>
+          <div class="kpi-value crimson" id="d_return_rate">--</div>
+          <div class="kpi-meta" id="d_return_rate_sub">--</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="dot jade"></span>🔥 加推 SKU 推荐（14天）</div>
+          <span class="panel-badge jade">14天热卖 + 退货率滞后7天</span>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap" style="max-height:450px;overflow-y:auto">
+            <table>
+              <thead>
+                <tr><th>排名</th><th class="sortable" data-table="topSkus" data-field="name" onclick="sortDataTable('topSkus','name')">货品名 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="orders" onclick="sortDataTable('topSkus','orders')">订单数 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="revenue" onclick="sortDataTable('topSkus','revenue')">收入 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="profit" onclick="sortDataTable('topSkus','profit')">利润 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="profit_margin" onclick="sortDataTable('topSkus','profit_margin')">利润率 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="return_rate" onclick="sortDataTable('topSkus','return_rate')">退货率 <span class="arrow"></span></th><th class="sortable" data-table="topSkus" data-field="factory" onclick="sortDataTable('topSkus','factory')">厂家 <span class="arrow"></span></th></tr>
+              </thead>
+              <tbody id="topSkuBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="dot crimson"></span>⚠️ 退货预警（14天）</div>
+          <span class="panel-badge crimson">14天窗口 · 退货率滞后7天</span>
+        </div>
+        <div class="panel-body">
+          <table>
+            <thead>
+              <tr><th class="sortable" data-table="returnAlerts" data-field="name" onclick="sortDataTable('returnAlerts','name')">货品名 <span class="arrow"></span></th><th class="sortable" data-table="returnAlerts" data-field="returns_30d" onclick="sortDataTable('returnAlerts','returns_30d')">14天退货 <span class="arrow"></span></th><th class="sortable" data-table="returnAlerts" data-field="total_orders" onclick="sortDataTable('returnAlerts','total_orders')">总订单 <span class="arrow"></span></th><th class="sortable" data-table="returnAlerts" data-field="return_rate" onclick="sortDataTable('returnAlerts','return_rate')">退货率 <span class="arrow"></span></th><th class="sortable" data-table="returnAlerts" data-field="factory" onclick="sortDataTable('returnAlerts','factory')">厂家 <span class="arrow"></span></th></tr>
+            </thead>
+            <tbody id="returnAlertBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="dot gold"></span>14天收入趋势</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap">
+              <canvas id="dailyTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="dot steel"></span>厂家退货率 TOP10（14天）</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap">
+              <canvas id="factoryReturnChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ OVERVIEW ═══════════════ -->
+  <section class="section" id="sec-overview">
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label" id="o_orders_label">本月有效单量</div>
+        <div class="kpi-value" id="o_orders">--</div>
+        <div class="kpi-meta" id="o_orders_meta">--</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label" id="o_profit_label">本月利润</div>
+        <div class="kpi-value jade" id="o_profit">--</div>
+        <div class="kpi-meta" id="o_profit_meta">--</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">退货率</div>
+        <div class="kpi-value amber" id="o_return_rate">--</div>
+        <div class="kpi-meta" id="o_return_rate_meta">--</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">14天活跃客户</div>
+        <div class="kpi-value gold" id="o_active_customers">--</div>
+        <div class="kpi-meta" id="o_active_customers_meta">--</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot gold"></span>月度经营对比</div>
+        <span class="panel-badge amber" id="o_month_badge">最近两个月</span>
+      </div>
+      <div class="panel-body"><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ RISK ═══════════════ -->
+  <section class="section" id="sec-risk">
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">14天退货单</div>
+        <div class="kpi-value crimson" id="r_returns">--</div>
+        <div class="kpi-meta"><span class="down">当前风险主指标</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">高退货SKU</div>
+        <div class="kpi-value crimson" id="r_skus">--</div>
+        <div class="kpi-meta">近14天需重点复盘</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">高退货厂家</div>
+        <div class="kpi-value amber" id="r_factories">--</div>
+        <div class="kpi-meta">退货率 ≥ 15%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">高风险员工</div>
+        <div class="kpi-value amber" id="r_employees">--</div>
+        <div class="kpi-meta">退货率 ≥ 15%</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot crimson"></span>最危险的三件事</div>
+        <span class="panel-badge crimson">实时风险摘要</span>
+      </div>
+      <div class="panel-body" id="riskSummaryBody"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TEAM ═══════════════ -->
+  <section class="section" id="sec-team">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot gold"></span>核心团队 · 三人</div>
+        <span class="panel-badge jade">实时数据</span>
+      </div>
+      <div class="panel-body">
+        <div class="emp-cards" id="teamCardsBody"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot jade"></span>退货率对比趋势（14天）</div>
+      </div>
+      <div class="panel-body"><div class="chart-wrap"><canvas id="teamReturnChart"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CUSTOMER ═══════════════ -->
+  <section class="section" id="sec-customer">
+    <div class="pool-row r5">
+      <div class="pool-cell"><div class="pool-num" id="c_total">--</div><div class="pool-label">总客户</div></div>
+      <div class="pool-cell" style="background:var(--crimson-dim)"><div class="pool-num" style="color:var(--crimson)" id="c_risk">--</div><div class="pool-label">风险观察</div></div>
+      <div class="pool-cell" style="background:var(--jade-dim)"><div class="pool-num" style="color:var(--jade)" id="c_p1">--</div><div class="pool-label">可加推</div></div>
+      <div class="pool-cell" style="background:var(--gold-dim)"><div class="pool-num" style="color:var(--gold)" id="c_p0">--</div><div class="pool-label">今日优先</div></div>
+      <div class="pool-cell" style="background:var(--amber-dim)"><div class="pool-num" style="color:var(--amber)" id="c_p2">--</div><div class="pool-label">可召回</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot gold"></span>客户分层结构</div>
+      </div>
+      <div class="panel-body"><div class="chart-wrap"><canvas id="customerPieChart"></canvas></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot jade"></span>可触达客户池</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="search-btn" id="customerFilterAll" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('all')">全部（--）</button>
+          <button class="search-btn" id="customerFilterReady" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('进入斩杀线')">进入斩杀线（--）</button>
+          <button class="search-btn" id="customerFilterRecall" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('召回期')">召回期（--）</button>
+          <button class="search-btn" id="customerFilterRisk" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('Risk')">风险观察（--）</button>
+          <button class="search-btn" id="customerFilterBirthday" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('BirthdayNear')">生日临近（--）</button>
+          <button class="search-btn" id="customerFilterP0P1" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('P0P1')">P0/P1（--）</button>
+        </div>
+        <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+          <table>
+            <thead>
+              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">斩杀线 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_180d" onclick="sortDataTable('customerPriority','revenue_180d')">180天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th>最近三单</th><th>推荐SKU</th></tr>
+            </thead>
+            <tbody id="customerPriorityBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:center">
+          <button class="search-btn" id="customerMoreBtn" style="background:var(--surface);color:var(--text);border:1px solid var(--border);display:none" onclick="showMoreCustomers()">查看更多客户</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="customerHistoryPanel" style="display:none">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot steel"></span>客户历史订单</div>
+        <span class="panel-badge amber" id="customerHistoryMeta">--</span>
+      </div>
+      <div class="panel-body">
+        <div id="customerHistorySummary" style="font-size:13px;color:var(--text-mid);margin-bottom:16px"></div>
+        <div class="table-wrap" style="max-height:360px;overflow-y:auto">
+          <table>
+            <thead>
+              <tr><th class="sortable" data-table="customerHistory" data-field="date" onclick="sortCustomerHistory('date')">日期 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="customer_name" onclick="sortCustomerHistory('customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="phone" onclick="sortCustomerHistory('phone')">手机号 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="platform" onclick="sortCustomerHistory('platform')">平台 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="sku_name" onclick="sortCustomerHistory('sku_name')">货品名 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="factory" onclick="sortCustomerHistory('factory')">厂家 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="refund_info" onclick="sortCustomerHistory('refund_info')">退款信息 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="refund_reason" onclick="sortCustomerHistory('refund_reason')">退款原因 <span class="arrow"></span></th><th class="sortable" data-table="customerHistory" data-field="revenue" onclick="sortCustomerHistory('revenue')">收款金额 <span class="arrow"></span></th></tr>
+            </thead>
+            <tbody id="customerHistoryBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:center">
+          <button class="search-btn" id="customerHistoryMoreBtn" style="background:var(--surface);color:var(--text);border:1px solid var(--border);display:none" onclick="showMoreCustomerHistory()">查看全部历史订单</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ACTION ═══════════════ -->
+  <section class="section" id="sec-action">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot gold"></span>本周建议动作</div>
+        <span class="panel-badge amber">来自实时客户数据</span>
+      </div>
+      <div class="panel-body" id="actionListBody"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><span class="dot crimson"></span>风险客户样本</div></div>
+        <div class="panel-body" id="riskAlertsBody"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><span class="dot jade"></span>加推客户样本</div></div>
+        <div class="panel-body" id="opportunityAlertsBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" id="footer">GENERATED · 加载中...</footer>
+
+</div>
+
+<script>
+// ===== Orders (单号查询) =====
+let orderData = null;
+let filteredOrders = [];
+const PAGE_SIZE = 100;
+let orderVisibleCount = PAGE_SIZE;
+let customerVisibleCount = 10;
+let customerFilterMode = 'all';
+let selectedCustomerKey = null;
+let customerHistoryVisibleCount = 20;
+let customerHistorySortState = { field: 'date', asc: false };
+
+async function loadOrders() {
+  try {
+    const resp = await fetch('orders_realtime.json');
+    if (!resp.ok) throw new Error('Not found');
+    orderData = await resp.json();
+    
+    filteredOrders = [...orderData.records];
+    orderVisibleCount = PAGE_SIZE;
+    applyCurrentSort();
+    updateSortArrows();
+    document.getElementById('ordersLoading').style.display = 'none';
+    document.getElementById('ordersContent').style.display = 'block';
+    
+    // 绑定搜索事件
+    window.initSearchEvents();
+    
+    const syncTime = new Date(orderData.synced_at).toLocaleString('zh-CN');
+    document.getElementById('orderSyncTime').textContent = `实时同步于 ${syncTime}`;
+    
+    renderOrders();
+  } catch(e) {
+    document.getElementById('ordersLoading').textContent = '订单数据未就绪，请先运行 npm run sync。错误：' + e.message;
+    document.getElementById('ordersLoading').style.color = 'var(--amber)';
+  }
+}
+
+function renderOrders() {
+  const start = 0;
+  const end = Math.min(orderVisibleCount, filteredOrders.length);
+  const body = document.getElementById('orderBody');
+  const summary = document.getElementById('orderSummary');
+  const showCount = Math.min(orderVisibleCount, filteredOrders.length);
+  summary.textContent = `显示 ${showCount} / 共 ${filteredOrders.length} 条`;
+
+  body.innerHTML = filteredOrders.slice(start, end).map(r => {
+    const refundType = r.refund_type || '';
+    const isReturn = refundType && refundType !== '0' && refundType !== '';
+    const statusClass = isReturn ? 'tag-danger' : (r.is_paid === '已打款' ? 'tag-ok' : 'tag-warn');
+    return `<tr>
+      <td style="font-weight:500">${r.customer_name || '-'}</td>
+      <td>${r.sku_name || '-'}</td>
+      <td>${r.employee || '-'}</td>
+      <td style="color:var(--text-mid)">${r.factory || '-'}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r.tracking_no || '-'}</td>
+      <td>${r.platform || '-'}</td>
+      <td style="font-family:var(--mono)">¥${r.revenue || '0'}</td>
+      <td style="font-family:var(--mono)">¥${r.cost || '0'}</td>
+      <td><span class="tag ${statusClass}">${isReturn ? refundType : (r.status || '-')}</span></td>
+      <td style="font-family:var(--mono);font-size:12px">${formatDateTime(r.pay_date || r.order_date || r.ship_date)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function liveSearch() {
+  clearTimeout(window._orderSearchTimer);
+  window._orderSearchTimer = setTimeout(filterOrders, 300);
+}
+
+function filterOrders() {
+  const q = document.getElementById('orderSearch').value.trim().toLowerCase();
+  const filter = document.getElementById('orderFilter').value;
+  
+  // Show loading state
+  document.getElementById('orderSummary').textContent = '搜索中...';
+  
+  // Use requestAnimationFrame to not block UI
+  requestAnimationFrame(() => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
+    const monthAgo = new Date(now - 30*86400000).toISOString().split('T')[0];
+    
+    filteredOrders = orderData.records.filter(r => {
+      // Text search
+      if (q) {
+        const searchStr = `${r.customer_name} ${r.sku_name} ${r.tracking_no} ${r.factory} ${r.employee} ${r.platform} ${r.phone} ${r.address}`.toLowerCase();
+        if (!searchStr.includes(q)) return false;
+      }
+      
+      // Filter
+      if (filter === 'today' && r.pay_date && !r.pay_date.startsWith(today)) return false;
+      if (filter === 'week' && r.pay_date && r.pay_date.split(' ')[0] < weekAgo) return false;
+      if (filter === 'month' && r.pay_date && r.pay_date.split(' ')[0] < monthAgo) return false;
+      if (filter === 'return') {
+        const rt = r.refund_type || '';
+        if (rt === '0' || rt === '') return false;
+      }
+      if (filter === 'unpaid' && r.is_paid === '已打款') return false;
+      
+      return true;
+    });
+
+    orderVisibleCount = PAGE_SIZE;
+    applyCurrentSort();
+    updateSortArrows();
+    renderOrders();
+  });
+}
+
+function clearOrderFilter() {
+  document.getElementById('orderSearch').value = '';
+  document.getElementById('orderFilter').value = 'all';
+  filteredOrders = [...orderData.records];
+  orderVisibleCount = PAGE_SIZE;
+  applyCurrentSort();
+  updateSortArrows();
+  renderOrders();
+}
+
+function showMoreOrders() {
+  orderVisibleCount += PAGE_SIZE;
+  renderOrders();
+}
+
+function showMoreCustomers() {
+  customerVisibleCount += 10;
+  renderCustomerSections();
+}
+
+function setCustomerFilter(mode) {
+  customerFilterMode = mode;
+  customerVisibleCount = 10;
+  renderCustomerSections();
+}
+
+function showMoreCustomerHistory() {
+  customerHistoryVisibleCount = Number.MAX_SAFE_INTEGER;
+  renderCustomerHistory();
+}
+
+// ===== Sorting =====
+let sortState = { field: 'pay_date', asc: false };
+
+function getSortValue(record, field) {
+  if (field === 'pay_date') return record.pay_date || record.order_date || record.ship_date || '';
+  return record[field];
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const str = String(value).trim();
+  if (!str) return '-';
+  const [datePart, timePart] = str.split(' ');
+  if (!timePart || timePart === '00:00:00') return datePart;
+  if (str.startsWith('1970-01-01')) return '-';
+  return `${datePart} ${timePart.slice(0,5)}`;
+}
+
+function applyCurrentSort() {
+  if (!sortState.field) return;
+  const field = sortState.field;
+  const dir = sortState.asc ? 1 : -1;
+
+  filteredOrders.sort((a, b) => {
+    let valA = getSortValue(a, field);
+    let valB = getSortValue(b, field);
+
+    if (valA == null && valB == null) return 0;
+    if (valA == null) return dir;
+    if (valB == null) return -dir;
+
+    valA = String(valA);
+    valB = String(valB);
+
+    const cleanA = valA.replace(/[^0-9.\-]/g, '');
+    const cleanB = valB.replace(/[^0-9.\-]/g, '');
+    const numA = parseFloat(cleanA);
+    const numB = parseFloat(cleanB);
+
+    if (!isNaN(numA) && !isNaN(numB) && cleanA.length > 0 && cleanB.length > 0) {
+      return (numA - numB) * dir;
+    }
+
+    if (valA.includes('-') && valB.includes('-') && valA.length >= 8 && valB.length >= 8) {
+      return valA.localeCompare(valB) * dir;
+    }
+
+    return valA.localeCompare(valB) * dir;
+  });
+}
+
+function sortOrders(field) {
+  if (sortState.field === field) {
+    sortState.asc = !sortState.asc;
+  } else {
+    sortState.field = field;
+    sortState.asc = field === 'pay_date' ? false : true;
+  }
+
+  applyCurrentSort();
+  updateSortArrows();
+  renderOrders();
+}
+
+function updateSortArrows() {
+  document.querySelectorAll('th.sortable[data-table="orders"]').forEach(th => {
+    th.classList.remove('active');
+    const arrow = th.querySelector('.arrow');
+    if (arrow) arrow.textContent = '';
+  });
+
+  if (!sortState.field) return;
+
+  const activeTh = document.querySelector(`th.sortable[data-table="orders"][data-field="${sortState.field}"]`);
+  if (activeTh) {
+    activeTh.classList.add('active');
+    const arrow = activeTh.querySelector('.arrow');
+    if (arrow) arrow.textContent = sortState.asc ? '↑' : '↓';
+  }
+}
+
+const dataTableSortState = {
+  topSkus: { field: null, asc: true },
+  returnAlerts: { field: null, asc: true },
+  customerPriority: { field: 'priority_score', asc: false },
+  customerHistory: { field: 'date', asc: false },
+};
+
+function defaultTableSortAsc(field) {
+  if (field === 'days_since_last_order' || field === 'birthday_days_until') return true;
+  if (field === 'date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score') return false;
+  return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
+}
+
+function getDataTableValue(item, field) {
+  if (field === 'priority_tier') {
+    return { P0: 0, P1: 1, P2: 2, Risk: 3 }[item[field]] ?? 99;
+  }
+  if (field === 'strike_window_status') {
+    return { '进入斩杀线': 0, '观察期': 1, '召回期': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
+  }
+  return item[field];
+}
+
+function sortDataTableItems(items, tableName) {
+  const state = dataTableSortState[tableName];
+  const sorted = [...items];
+  if (!state || !state.field) return sorted;
+
+  const dir = state.asc ? 1 : -1;
+  const field = state.field;
+  sorted.sort((a, b) => {
+    let valA = getDataTableValue(a, field);
+    let valB = getDataTableValue(b, field);
+
+    if (valA == null && valB == null) return 0;
+    if (valA == null) return dir;
+    if (valB == null) return -dir;
+
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return (valA - valB) * dir;
+    }
+
+    valA = String(valA);
+    valB = String(valB);
+    const numA = parseFloat(valA.replace(/[^0-9.\-]/g, ''));
+    const numB = parseFloat(valB.replace(/[^0-9.\-]/g, ''));
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return (numA - numB) * dir;
+    }
+
+    return valA.localeCompare(valB) * dir;
+  });
+  return sorted;
+}
+
+function updateDataTableArrows(tableName) {
+  document.querySelectorAll(`th.sortable[data-table="${tableName}"]`).forEach(th => {
+    th.classList.remove('active');
+    const arrow = th.querySelector('.arrow');
+    if (arrow) arrow.textContent = '';
+  });
+
+  const state = dataTableSortState[tableName];
+  if (!state || !state.field) return;
+
+  const activeTh = document.querySelector(`th.sortable[data-table="${tableName}"][data-field="${state.field}"]`);
+  if (activeTh) {
+    activeTh.classList.add('active');
+    const arrow = activeTh.querySelector('.arrow');
+    if (arrow) arrow.textContent = state.asc ? '↑' : '↓';
+  }
+}
+
+function sortDataTable(tableName, field) {
+  const state = dataTableSortState[tableName];
+  if (!state) return;
+
+  if (state.field === field) {
+    state.asc = !state.asc;
+  } else {
+    state.field = field;
+    state.asc = defaultTableSortAsc(field);
+  }
+
+  if (tableName === 'topSkus' || tableName === 'returnAlerts') renderDaily();
+  if (tableName === 'customerPriority') renderCustomerSections();
+  if (tableName === 'customerHistory') renderCustomerHistory();
+}
+
+function sortCustomerHistory(field) {
+  sortDataTable('customerHistory', field);
+}
+
+// 初始化搜索事件
+window.initSearchEvents = function() {
+  const input = document.getElementById('orderSearch');
+  if (input) {
+    input.oninput = function() {
+      clearTimeout(window._orderTimer);
+      window._orderTimer = setTimeout(filterOrders, 200);
+    };
+    console.log('✅ 搜索事件已绑定');
+  }
+  
+  const sel = document.getElementById('orderFilter');
+  if (sel) {
+    sel.onchange = function() {
+      filterOrders();
+    };
+  }
+};
+
+// ===== Data Loading =====
+let dashboardData = null;
+let customerActionData = null;
+
+async function loadData() {
+  try {
+    const [dashboardResp, customerResp] = await Promise.all([
+      fetch('dashboard_data.json'),
+      fetch('customer_action_data.json')
+    ]);
+    if (!dashboardResp.ok) throw new Error('dashboard_data.json not found');
+    if (!customerResp.ok) throw new Error('customer_action_data.json not found');
+
+    dashboardData = await dashboardResp.json();
+    customerActionData = await customerResp.json();
+
+    renderDaily();
+    renderOverviewSection();
+    renderRiskSection();
+    renderTeamSection();
+    renderCustomerSections();
+    document.getElementById('dailyLoading').style.display = 'none';
+    document.getElementById('dailyContent').style.display = 'block';
+  } catch(e) {
+    console.warn('无法加载经营数据:', e);
+    document.getElementById('dailyLoading').textContent = '经营数据未就绪，请先运行 npm run build。';
+    document.getElementById('dailyLoading').style.color = 'var(--amber)';
+  }
+}
+
+function renderDaily() {
+  if (!dashboardData) return;
+  const d = dashboardData;
+  
+  // Header
+  const sourceSyncText = d.source_synced_at ? new Date(d.source_synced_at).toLocaleString('zh-CN') : d.generated_at;
+  document.getElementById('dataDate').textContent = `订单源：实时视图 + 历史补全 · 源同步 ${sourceSyncText} · 统计周期 ${d.period.start} ~ ${d.period.end}`;
+  document.getElementById('footer').textContent = `GENERATED · ${d.generated_at} · SOURCE_SYNC ${sourceSyncText} · ${d.total_records} 条记录 · BUSINESS COCKPIT`;
+  
+  // KPIs
+  const s = d.summary_30d;
+  const retRate = (s.lagged_return_rate ?? 0).toFixed(1);
+  
+  document.getElementById('d_orders').textContent = s.total_orders.toLocaleString();
+  document.getElementById('d_orders_sub').innerHTML = `${d.period.start} ~ ${d.period.end}`;
+  document.getElementById('d_revenue').textContent = '¥' + s.total_revenue.toLocaleString();
+  document.getElementById('d_revenue_sub').textContent = d.top_skus.length + ' 个活跃SKU';
+  document.getElementById('d_returns').textContent = s.total_returns;
+  document.getElementById('d_returns_sub').textContent = `涉及 ${d.return_alerts.length} 个货品/厂家组合`;
+  document.getElementById('d_return_rate').textContent = retRate + '%';
+  document.getElementById('d_return_rate_sub').innerHTML = retRate > 15 ? '<span class="down">按7天延迟口径偏高</span>' : '<span class="up">按7天延迟口径正常</span>';
+  
+  // Top SKUs
+  const sortedTopSkus = sortDataTableItems(d.top_skus, 'topSkus');
+  const skuBody = document.getElementById('topSkuBody');
+  skuBody.innerHTML = sortedTopSkus.map((s, i) => {
+    const rrClass = s.return_rate > 20 ? 'tag-danger' : s.return_rate > 10 ? 'tag-warn' : 'tag-ok';
+    const profitClass = s.profit_margin > 30 ? 'tag-ok' : s.profit_margin > 0 ? 'tag-steel' : 'tag-danger';
+    return `<tr>
+      <td style="font-family:var(--mono);color:var(--gold)">${i + 1}</td>
+      <td style="font-weight:600">${s.name}</td>
+      <td style="font-family:var(--mono)">${s.orders}</td>
+      <td style="font-family:var(--mono)">¥${s.revenue.toLocaleString()}</td>
+      <td style="font-family:var(--mono)">¥${s.profit.toLocaleString()}</td>
+      <td><span class="${profitClass}">${s.profit_margin}%</span></td>
+      <td><span class="${rrClass}">${s.return_rate}%</span></td>
+      <td style="color:var(--text-mid)">${s.factory}</td>
+    </tr>`;
+  }).join('');
+  
+  // Return Alerts
+  const sortedReturnAlerts = sortDataTableItems(d.return_alerts, 'returnAlerts');
+  const alertBody = document.getElementById('returnAlertBody');
+  alertBody.innerHTML = sortedReturnAlerts.map(s => {
+    const rrClass = s.return_rate > 30 ? 'tag-danger' : s.return_rate > 15 ? 'tag-warn' : 'tag-ok';
+    return `<tr>
+      <td style="font-weight:600">${s.name}</td>
+      <td style="font-family:var(--mono);color:var(--crimson)">${s.returns_30d}</td>
+      <td style="font-family:var(--mono)">${s.total_orders}</td>
+      <td><span class="${rrClass}">${s.return_rate}%</span></td>
+      <td style="color:var(--text-mid)">${s.factory}</td>
+    </tr>`;
+  }).join('');
+
+  updateDataTableArrows('topSkus');
+  updateDataTableArrows('returnAlerts');
+
+  // Daily Trend Chart
+  new Chart(document.getElementById('dailyTrendChart'), {
+    type: 'line',
+    data: {
+      labels: d.daily_trend.map(x => x.date.slice(5)),
+      datasets: [{
+        label: '收入',
+        data: d.daily_trend.map(x => x.revenue),
+        borderColor: '#c96a2b',
+        backgroundColor: 'rgba(201, 106, 43, 0.10)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHitRadius: 8,
+      }, {
+        label: '退货',
+        data: d.daily_trend.map(x => x.returns),
+        borderColor: '#e84855',
+        backgroundColor: 'rgba(232, 72, 85, 0.05)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        yAxisID: 'y1',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', align: 'end' },
+        tooltip: { backgroundColor: '#fff8ed', titleColor: '#3f3426', bodyColor: '#3f3426', borderColor: '#d7c2a2', borderWidth: 1, cornerRadius: 6, padding: 12 }
+      },
+      scales: {
+        y: { position: 'left', grid: { color: 'rgba(168, 140, 102, 0.25)' }, border: { display: false } },
+        y1: { position: 'right', grid: { display: false }, border: { display: false } },
+        x: { grid: { display: false }, border: { display: false } }
+      }
+    }
+  });
+  
+  // Factory Return Chart
+  const topFactories = d.factories.slice(0, 10).reverse();
+  new Chart(document.getElementById('factoryReturnChart'), {
+    type: 'bar',
+    data: {
+      labels: topFactories.map(f => f.name),
+      datasets: [{
+        data: topFactories.map(f => f.return_rate),
+        backgroundColor: topFactories.map(f => f.return_rate > 30 ? 'rgba(169,74,59,0.72)' : f.return_rate > 15 ? 'rgba(211,138,44,0.68)' : 'rgba(123,139,90,0.68)'),
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: 'rgba(42,42,46,0.6)' }, border: { display: false }, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ===== Navigation =====
+document.querySelectorAll('.section-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sec-' + btn.dataset.section).classList.add('active');
+  });
+});
+
+// ===== Init =====
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'});
+loadOrders();
+loadData();
+
+// Load static charts when sections are activated
+let staticChartsLoaded = {};
+const observer = new MutationObserver(() => {
+  ['overview','team','customer'].forEach(sec => {
+    if (document.getElementById('sec-' + sec).classList.contains('active') && !staticChartsLoaded[sec]) {
+      staticChartsLoaded[sec] = true;
+      loadStaticCharts(sec);
+    }
+  });
+});
+observer.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+
+function renderOverviewSection() {
+  if (!dashboardData || !dashboardData.overview_summary) return;
+
+  const overview = dashboardData.overview_summary;
+  const current = overview.current_month || {};
+  const previous = overview.previous_month || null;
+
+  document.getElementById('o_orders_label').textContent = `${(current.month || '').slice(5) || '本月'}有效单量`;
+  document.getElementById('o_orders').textContent = (current.orders || 0).toLocaleString();
+  document.getElementById('o_orders_meta').innerHTML = previous ? `<span class="down">${previous.month.slice(5)} ${previous.orders}单</span>` : '暂无上月对比';
+
+  document.getElementById('o_profit_label').textContent = `${(current.month || '').slice(5) || '本月'}利润`;
+  document.getElementById('o_profit').textContent = `¥${(current.profit || 0).toLocaleString()}`;
+  document.getElementById('o_profit_meta').innerHTML = `利润率 <span class="up">${current.profit_margin || 0}%</span>`;
+
+  document.getElementById('o_return_rate').textContent = `${current.return_rate || 0}%`;
+  document.getElementById('o_return_rate_meta').innerHTML = previous ? `${previous.month.slice(5)} ${previous.return_rate || 0}% · <span class="warn">最近月度对比</span>` : '暂无上月对比';
+
+  document.getElementById('o_active_customers').textContent = (overview.active_customers_30d || 0).toLocaleString();
+  document.getElementById('o_active_customers_meta').textContent = `最近14天有成交的客户数`;
+  document.getElementById('o_month_badge').textContent = previous ? `${previous.month} vs ${current.month}` : (current.month || '最近月度');
+}
+
+function renderRiskSection() {
+  if (!dashboardData || !dashboardData.risk_summary) return;
+
+  const risk = dashboardData.risk_summary;
+  document.getElementById('r_returns').textContent = risk.returning_orders_30d || 0;
+  document.getElementById('r_skus').textContent = risk.high_return_sku_count || 0;
+  document.getElementById('r_factories').textContent = risk.high_return_factory_count || 0;
+  document.getElementById('r_employees').textContent = risk.high_return_employee_count || 0;
+
+  const blocks = [];
+  if ((risk.top_risk_skus || []).length) {
+    const sku = risk.top_risk_skus[0];
+    blocks.push(`<div class="alert alert-danger"><div class="alert-title">SKU 风险：${sku.name}</div><div class="alert-body">14天退货 ${sku.returns_30d} 单 · 退货率 ${sku.return_rate}% · 厂家 ${sku.factory}</div></div>`);
+  }
+  if ((risk.top_risk_factories || []).length) {
+    const fac = risk.top_risk_factories[0];
+    blocks.push(`<div class="alert alert-danger"><div class="alert-title">厂家风险：${fac.name}</div><div class="alert-body">14天单量 ${fac.orders} · 退货 ${fac.returns} 单 · 退货率 ${fac.return_rate}%</div></div>`);
+  }
+  if ((risk.top_risk_employees || []).length) {
+    const emp = risk.top_risk_employees[0];
+    blocks.push(`<div class="alert alert-warn"><div class="alert-title">员工风险：${emp.name}</div><div class="alert-body">14天单量 ${emp.orders} · 退货 ${emp.returns} 单 · 退货率 ${emp.return_rate}%</div></div>`);
+  }
+
+  document.getElementById('riskSummaryBody').innerHTML = blocks.join('') || '<div class="alert alert-jade"><div class="alert-title">当前无显著风险</div><div class="alert-body">风险指标暂时平稳。</div></div>';
+}
+
+function renderTeamSection() {
+  if (!dashboardData || !dashboardData.employees) return;
+
+  const team = dashboardData.employees.slice(0, 3);
+  const maxOrders = Math.max(...team.map(e => e.orders || 0), 1);
+  const body = document.getElementById('teamCardsBody');
+  body.innerHTML = team.map(emp => {
+    const returnRate = emp.return_rate || 0;
+    const loadClass = (emp.orders || 0) >= maxOrders * 0.85 ? 'high' : (emp.orders || 0) >= maxOrders * 0.55 ? 'med' : 'low';
+    const barClass = returnRate > 20 ? 'danger' : returnRate > 10 ? 'warn' : 'ok';
+    const rateClass = returnRate > 15 ? 'danger' : 'ok';
+    const barWidth = Math.max(8, Math.round(((emp.orders || 0) / maxOrders) * 100));
+    const note = returnRate > 15 ? '退货压力偏高，需重点复盘' : '退货控制稳定，可继续推进';
+    return `<div class="emp-card">
+      <div class="emp-card-header">
+        <div class="emp-name">${emp.name}</div>
+        <span class="emp-load ${loadClass}">${(emp.orders || 0) >= maxOrders * 0.85 ? '负载偏高' : (emp.orders || 0) >= maxOrders * 0.55 ? '负载正常' : '负载较轻'}</span>
+      </div>
+      <div class="emp-stats">
+        <div class="emp-stat">
+          <div class="emp-stat-label">14天退货率</div>
+          <div class="emp-stat-value ${rateClass}">${returnRate}%</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">14天营收</div>
+          <div class="emp-stat-value">¥${(emp.revenue || 0).toLocaleString()}</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">14天单量</div>
+          <div class="emp-stat-value">${emp.orders || 0}</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">14天退货</div>
+          <div class="emp-stat-value">${emp.returns || 0}</div>
+        </div>
+      </div>
+      <div class="emp-bar"><div class="emp-bar-fill ${barClass}" style="width:${barWidth}%"></div></div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text-dim)">${note}</div>
+    </div>`;
+  }).join('');
+}
+
+function getCustomerHistoryRecords(customer) {
+  if (!orderData || !orderData.records || !customer) return [];
+  return orderData.records
+    .filter(r => {
+      if (customer.phone && r.phone) return String(r.phone) === String(customer.phone);
+      return (r.customer_name || '') === (customer.customer_name || '') && (r.employee || '') === (customer.employee || '');
+    })
+    .map(r => ({
+      date: r.pay_date || r.order_date || r.ship_date || '',
+      date_display: formatDateTime(r.pay_date || r.order_date || r.ship_date || ''),
+      customer_name: r.customer_name || '-',
+      phone: r.phone || '-',
+      platform: r.platform || '-',
+      sku_name: r.sku_name || '-',
+      factory: r.factory || '-',
+      refund_info: r.refund_type || r.return_status || '正常',
+      refund_reason: r.refund_reason || '-',
+      revenue: r.revenue || 0,
+    }));
+}
+
+function renderCustomerHistory() {
+  if (!selectedCustomerKey || !customerActionData) {
+    document.getElementById('customerHistoryPanel').style.display = 'none';
+    customerHistoryVisibleCount = 20;
+    return;
+  }
+
+  const customer = (customerActionData.customers || []).find(c => c.customer_key === selectedCustomerKey);
+  if (!customer) {
+    document.getElementById('customerHistoryPanel').style.display = 'none';
+    return;
+  }
+
+  const records = sortDataTableItems(getCustomerHistoryRecords(customer), 'customerHistory');
+  const visibleRecords = records.slice(0, customerHistoryVisibleCount);
+  document.getElementById('customerHistoryPanel').style.display = 'block';
+  document.getElementById('customerHistoryMeta').textContent = `${visibleRecords.length} / ${records.length} 条历史订单`;
+  document.getElementById('customerHistorySummary').textContent = `${customer.customer_name || '-'} · 手机 ${customer.phone || '-'} · 负责人 ${customer.employee || '-'} · 最近下单 ${customer.last_order_date || '-'} · 180天金额 ¥${(customer.revenue_180d || 0).toLocaleString()} · 生日 ${customer.birthday_month_day || '-'}${customer.birthday_days_until != null ? `（${customer.birthday_days_until}天后）` : ''} · 偏好 ${((customer.birthday_style_preferences || []).slice(0,3).join('/') || '-') } · 期待礼物 ${customer.birthday_expected_gift || '-'}`;
+  document.getElementById('customerHistoryBody').innerHTML = visibleRecords.map(r => `<tr><td style="font-family:var(--mono)">${r.date_display || '-'}</td><td>${r.customer_name}</td><td style="font-family:var(--mono)">${r.phone}</td><td>${r.platform}</td><td>${r.sku_name}</td><td>${r.factory}</td><td>${r.refund_info}</td><td>${r.refund_reason}</td><td style="font-family:var(--mono)">¥${(Number(r.revenue) || 0).toLocaleString()}</td></tr>`).join('') || '<tr><td colspan="9">暂无历史订单</td></tr>';
+  document.getElementById('customerHistoryMoreBtn').style.display = records.length > visibleRecords.length ? 'inline-flex' : 'none';
+  updateDataTableArrows('customerHistory');
+}
+
+function renderCustomerSections() {
+  if (!customerActionData) return;
+
+  const summary = customerActionData.summary || {};
+  const customers = customerActionData.customers || [];
+  const p0 = summary.p0_today || 0;
+  const p1 = summary.p1_upsell || 0;
+  const p2 = summary.p2_recall || 0;
+  const risk = summary.risk_watch || 0;
+
+  document.getElementById('c_total').textContent = customers.length.toLocaleString();
+  document.getElementById('c_risk').textContent = risk.toLocaleString();
+  document.getElementById('c_p1').textContent = p1.toLocaleString();
+  document.getElementById('c_p0').textContent = p0.toLocaleString();
+  document.getElementById('c_p2').textContent = p2.toLocaleString();
+
+  const customerBuckets = {
+    all: customers,
+    '进入斩杀线': customers.filter(c => c.strike_window_status === '进入斩杀线'),
+    '召回期': customers.filter(c => c.strike_window_status === '召回期'),
+    'Risk': customers.filter(c => c.priority_tier === 'Risk'),
+    'BirthdayNear': customers.filter(c => c.birthday_is_near),
+    'P0P1': customers.filter(c => c.priority_tier === 'P0' || c.priority_tier === 'P1'),
+  };
+
+  const filteredCustomers = customerBuckets[customerFilterMode] || customers;
+  let sortedCustomers = sortDataTableItems(filteredCustomers, 'customerPriority');
+  if (customerFilterMode === 'BirthdayNear' && dataTableSortState.customerPriority.field === 'priority_score') {
+    sortedCustomers = [...sortedCustomers].sort((a, b) => {
+      const da = a.birthday_days_until ?? 999;
+      const db = b.birthday_days_until ?? 999;
+      if (da !== db) return da - db;
+      return (b.priority_score || 0) - (a.priority_score || 0);
+    });
+  }
+  const priorityBody = document.getElementById('customerPriorityBody');
+  priorityBody.innerHTML = sortedCustomers.slice(0, customerVisibleCount).map(c => `<tr onclick="selectedCustomerKey='${c.customer_key}'; customerHistoryVisibleCount = 20; renderCustomerHistory()" style="cursor:pointer">
+    <td style="font-weight:600">${c.customer_name || '-'}${c.birthday_is_near ? ` <span class="tag tag-warn">生日 ${c.birthday_month_day || ''}</span>` : ''}${(c.birthday_style_preferences || []).length ? `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">偏好：${c.birthday_style_preferences.slice(0,3).join(' / ')}</div>` : ''}</td>
+    <td>${c.employee || '-'}</td>
+    <td style="font-family:var(--mono)">${c.priority_score ?? '-'}</td>
+    <td><span class="tag ${c.priority_tier === 'P0' ? 'tag-danger' : c.priority_tier === 'P1' ? 'tag-ok' : c.priority_tier === 'P2' ? 'tag-warn' : 'tag-steel'}">${c.priority_tier}</span></td>
+    <td><span class="tag ${c.strike_window_status === '进入斩杀线' ? 'tag-ok' : c.strike_window_status === '观察期' ? 'tag-warn' : c.strike_window_status === '召回期' ? 'tag-steel' : 'tag-danger'}">${c.strike_window_status || '-'}</span></td>
+    <td style="font-family:var(--mono)">${c.birthday_month_day || '-'}${c.birthday_days_until != null ? ` / ${c.birthday_days_until}天` : ''}</td>
+    <td style="font-family:var(--mono)">¥${(c.revenue_180d || 0).toLocaleString()}</td>
+    <td style="font-family:var(--mono)">${c.last_order_date || '-'} / ${c.days_since_last_order ?? '-'}天</td>
+    <td>${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join('<br>') || '-'}</td>
+    <td>${(c.recommended_skus || []).slice(0,2).join(' / ') || '-'}</td>
+  </tr>`).join('');
+  updateDataTableArrows('customerPriority');
+  document.getElementById('customerMoreBtn').style.display = sortedCustomers.length > customerVisibleCount ? 'inline-flex' : 'none';
+  document.getElementById('customerFilterAll').style.background = customerFilterMode === 'all' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterReady').style.background = customerFilterMode === '进入斩杀线' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterRecall').style.background = customerFilterMode === '召回期' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterRisk').style.background = customerFilterMode === 'Risk' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterBirthday').style.background = customerFilterMode === 'BirthdayNear' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterP0P1').style.background = customerFilterMode === 'P0P1' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterAll').textContent = `全部（${customerBuckets.all.length}）`;
+  document.getElementById('customerFilterReady').textContent = `进入斩杀线（${customerBuckets['进入斩杀线'].length}）`;
+  document.getElementById('customerFilterRecall').textContent = `召回期（${customerBuckets['召回期'].length}）`;
+  document.getElementById('customerFilterRisk').textContent = `风险观察（${customerBuckets['Risk'].length}）`;
+  document.getElementById('customerFilterBirthday').textContent = `生日临近（${customerBuckets['BirthdayNear'].length}）`;
+  document.getElementById('customerFilterP0P1').textContent = `P0/P1（${customerBuckets['P0P1'].length}）`;
+  if (selectedCustomerKey) renderCustomerHistory();
+
+  const actions = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 4);
+  document.getElementById('actionListBody').innerHTML = actions.map((c, idx) => `<div class="action-item">
+    <div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div>
+    <div>
+      <div class="action-title">联系 ${c.customer_name || '客户'} · ${c.priority_tier}</div>
+      <div class="action-desc">负责人：${c.employee || '-'} · 节奏：${c.platform_cadence_bucket || '-'} · 斩杀线：${c.strike_window_status || '-'}${c.birthday_is_near ? ` · 生日 ${c.birthday_month_day || ''}` : ''} · 上次下单：${formatDateTime(c.last_order_date)} · 最近三单：${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join(' ｜ ') || '-'} · 推荐：${(c.recommended_skus || []).join(' / ') || '暂无'} · ${c.action_reason || ''}</div>
+    </div>
+  </div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无可执行加推动作</div><div class="alert-body">当前客户分层没有 P0 / P1 名单。</div></div>';
+
+  const riskCustomers = customers.filter(c => c.priority_tier === 'Risk').slice(0, 3);
+  document.getElementById('riskAlertsBody').innerHTML = riskCustomers.map(c => `<div class="alert alert-danger" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · 风险观察</div><div class="alert-body">负责人：${c.employee || '-'} · 近90天退货 ${c.return_orders_90d || 0} 次 · 180天退货率 ${c.return_rate_180d || 0}%</div></div>`).join('') || '<div class="alert alert-jade"><div class="alert-title">暂无风险样本</div><div class="alert-body">当前没有风险观察客户。</div></div>';
+
+  const opportunities = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 3);
+  document.getElementById('opportunityAlertsBody').innerHTML = opportunities.map(c => `<div class="alert alert-jade" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · ${c.priority_tier}</div><div class="alert-body">平台：${c.platform || '-'} · 推荐：${(c.recommended_skus || []).slice(0, 2).join(' / ') || '暂无'} · ${c.action_reason || ''}</div></div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无机会样本</div><div class="alert-body">当前没有高优先客户。</div></div>';
+}
+
+function loadStaticCharts(sec) {
+  if (sec === 'overview' && !window._monthlyChart && dashboardData && dashboardData.overview_summary) {
+    const overview = dashboardData.overview_summary;
+    const current = overview.current_month || {};
+    const previous = overview.previous_month || { month: '无上月', orders: 0, returns: 0, revenue: 0, profit: 0 };
+    window._monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+      type: 'bar',
+      data: {
+        labels: ['有效单量', '退货', '收款(万)', '利润(万)'],
+        datasets: [
+          { label: previous.month || '上月', data: [previous.orders || 0, previous.returns || 0, ((previous.revenue || 0) / 10000).toFixed(1), ((previous.profit || 0) / 10000).toFixed(1)], backgroundColor: 'rgba(160,130,95,0.45)', borderColor: '#8f7c67', borderWidth: 1, borderRadius: 2 },
+          { label: current.month || '本月', data: [current.orders || 0, current.returns || 0, ((current.revenue || 0) / 10000).toFixed(1), ((current.profit || 0) / 10000).toFixed(1)], backgroundColor: 'rgba(201,106,43,0.58)', borderColor: '#c96a2b', borderWidth: 1, borderRadius: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end' } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(42,42,46,0.6)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+  if (sec === 'team' && !window._teamChart && dashboardData && dashboardData.employees) {
+    const team = dashboardData.employees.slice(0, 3);
+    window._teamChart = new Chart(document.getElementById('teamReturnChart'), {
+      type: 'bar',
+      data: {
+        labels: team.map(emp => emp.name),
+        datasets: [
+          { label: '14天退货率', data: team.map(emp => emp.return_rate || 0), backgroundColor: 'rgba(169,74,59,0.65)', borderColor: '#a94a3b', borderWidth: 1, borderRadius: 2 },
+          { label: '14天单量', data: team.map(emp => emp.orders || 0), backgroundColor: 'rgba(201,106,43,0.58)', borderColor: '#c96a2b', borderWidth: 1, borderRadius: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end' } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(42,42,46,0.6)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+  if (sec === 'customer' && !window._custChart && customerActionData) {
+    const summary = customerActionData.summary || {};
+    window._custChart = new Chart(document.getElementById('customerPieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['今日优先', '可加推', '可召回', '风险观察'],
+        datasets: [{ data: [summary.p0_today || 0, summary.p1_upsell || 0, summary.p2_recall || 0, summary.risk_watch || 0], backgroundColor: ['#c96a2b', '#7b8b5a', '#d38a2c', '#a94a3b'], borderWidth: 2, borderColor: '#fff8ed', hoverOffset: 10 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+}
+
+// Global Chart defaults
+Chart.defaults.color = '#6c5b49';
+Chart.defaults.borderColor = '#d7c2a2';
+Chart.defaults.font.family = "'JetBrains Mono', 'Noto Sans SC', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'rectRounded';
+Chart.defaults.plugins.legend.labels.padding = 16;
+</script>
+</body>
+</html>
