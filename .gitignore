@@ -12,6 +12,7 @@ orders_realtime.json
 dashboard_data.json
 customer_action_data.json
 birthday_members.json
+duty_schedule.json
 full_orders.json
 danhaodata.json
 *.tmp.json

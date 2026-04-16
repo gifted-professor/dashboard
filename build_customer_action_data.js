@@ -12,6 +12,7 @@ const OUTPUT_FILE = path.join(ROOT, 'customer_action_data.json');
 const TMP_FILE = path.join(ROOT, 'customer_action_data.tmp.json');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ACTION_WINDOW_DAYS = 14;
+const RETURN_RATE_WINDOW_DAYS = 21;
 const RETURN_RATE_LAG_DAYS = 7;
 const HISTORY_DAYS = 180;
 const BIRTHDAY_NEAR_DAYS = 7;
@@ -91,7 +92,10 @@ function daysUntilBirthday(info, fromDate) {
 }
 
 function toDateKey(date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function eventDate(record) {
@@ -153,7 +157,7 @@ function buildLaggedWindow(latestDate) {
   }
   const lagEnd = new Date(latestDate.getTime() - RETURN_RATE_LAG_DAYS * DAY_MS);
   lagEnd.setHours(0, 0, 0, 0);
-  return buildTrailingWindow(lagEnd, ACTION_WINDOW_DAYS);
+  return buildTrailingWindow(lagEnd, RETURN_RATE_WINDOW_DAYS);
 }
 
 function isInWindow(date, window) {
@@ -198,28 +202,92 @@ function cadenceBucket(platform, medianGap) {
   return '慢节奏';
 }
 
-function strikeWindowStatus(platform, daysSinceLastOrder, medianGap) {
-  const bucket = cadenceBucket(platform, medianGap);
-  if (daysSinceLastOrder == null) return '未知';
+function percentileOrNull(values, p) {
+  if (!values.length) return null;
+  return percentile(values, p);
+}
 
-  if (bucket === '快节奏') {
-    if (daysSinceLastOrder <= 3) return '冷却期';
-    if (daysSinceLastOrder <= 7) return '观察期';
-    if (daysSinceLastOrder <= 14) return '进入斩杀线';
-    return '召回期';
+function average(values) {
+  if (!values.length) return null;
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1));
+}
+
+function dynamicTimingWindow(uniqueOrderDays, repeatIntervals, daysSinceLastOrder) {
+  const repeatCount = repeatIntervals.length;
+  const intervalP25 = percentileOrNull(repeatIntervals, 0.25);
+  const intervalMedian = percentileOrNull(repeatIntervals, 0.5);
+  const intervalP75 = percentileOrNull(repeatIntervals, 0.75);
+  const recentIntervals = repeatIntervals.slice(-2);
+  const recentIntervalAvg = average(recentIntervals);
+  const trendBase = intervalMedian || recentIntervalAvg || null;
+  const rawTrendRatio = trendBase && recentIntervalAvg ? recentIntervalAvg / trendBase : 1;
+  const trendRatio = Number(Math.min(1.25, Math.max(0.8, rawTrendRatio || 1)).toFixed(2));
+
+  let expectedGapDays;
+  let windowStart;
+  let windowEnd;
+  let dormantAfter;
+  let cadenceSource;
+
+  if (uniqueOrderDays >= 3 && intervalMedian != null) {
+    expectedGapDays = Math.max(3, Math.round(intervalMedian * trendRatio));
+    windowStart = Math.max(3, Math.round(expectedGapDays * 0.8));
+    windowEnd = Math.max(windowStart + 1, Math.round(expectedGapDays * 1.25));
+    dormantAfter = Math.max(45, Math.round(Math.max(intervalP75 || 0, expectedGapDays * 2)));
+    cadenceSource = 'history_rich';
+  } else if (uniqueOrderDays === 2 && intervalMedian != null) {
+    expectedGapDays = Math.max(3, Math.round(intervalMedian));
+    windowStart = Math.max(3, Math.round(expectedGapDays * 0.85));
+    windowEnd = Math.max(windowStart + 1, Math.round(expectedGapDays * 1.35));
+    dormantAfter = Math.max(45, Math.round(expectedGapDays * 2));
+    cadenceSource = 'history_light';
+  } else {
+    expectedGapDays = 21;
+    windowStart = 10;
+    windowEnd = 28;
+    dormantAfter = 75;
+    cadenceSource = 'cohort_fallback';
   }
 
-  if (bucket === '中节奏') {
-    if (daysSinceLastOrder <= 5) return '冷却期';
-    if (daysSinceLastOrder <= 14) return '观察期';
-    if (daysSinceLastOrder <= 21) return '进入斩杀线';
-    return '召回期';
+  let windowState = 'unknown';
+  let windowStatus = '未知';
+  if (daysSinceLastOrder != null) {
+    if (daysSinceLastOrder < windowStart) {
+      windowState = 'cooldown';
+      windowStatus = '冷却期';
+    } else if (daysSinceLastOrder <= windowEnd) {
+      windowState = 'ready';
+      windowStatus = '可触达';
+    } else if (daysSinceLastOrder < dormantAfter) {
+      windowState = 'late';
+      windowStatus = '已超窗';
+    } else {
+      windowState = 'dormant';
+      windowStatus = '沉睡';
+    }
   }
 
-  if (daysSinceLastOrder <= 14) return '冷却期';
-  if (daysSinceLastOrder <= 30) return '观察期';
-  if (daysSinceLastOrder <= 60) return '进入斩杀线';
-  return '召回期';
+  const dueRatio = expectedGapDays > 0 && daysSinceLastOrder != null
+    ? Number((daysSinceLastOrder / expectedGapDays).toFixed(2))
+    : null;
+
+  return {
+    repeat_count: repeatCount,
+    unique_order_days: uniqueOrderDays,
+    interval_p25: intervalP25,
+    interval_median: intervalMedian,
+    interval_p75: intervalP75,
+    recent_interval_avg: recentIntervalAvg,
+    trend_ratio: trendRatio,
+    expected_gap_days: expectedGapDays,
+    window_start: windowStart,
+    window_end: windowEnd,
+    dormant_after: dormantAfter,
+    due_ratio: dueRatio,
+    cadence_source: cadenceSource,
+    window_state: windowState,
+    window_status: windowStatus,
+  };
 }
 
 function loadBirthdayMap(latestDate) {
@@ -270,6 +338,93 @@ function styleTagsFromBirthday(record) {
     .filter(Boolean);
 }
 
+function recommendationConfidence(pairCount, conversionRate, sourceHitCount) {
+  if (pairCount >= 8 && conversionRate >= 0.25) return 'high';
+  if (pairCount >= 4 && conversionRate >= 0.15) return 'medium';
+  if (sourceHitCount >= 2 && pairCount >= 3) return 'medium';
+  return 'low';
+}
+
+function recommendationReason(candidate) {
+  const sourceLabel = (candidate.source_skus || []).join('、');
+  const bestRatio = candidate.best_source_total > 0 ? `${candidate.best_pair_count}/${candidate.best_source_total}` : `${candidate.best_pair_count}`;
+  if ((candidate.reason_tags || []).includes('多源命中') && sourceLabel) {
+    return `${sourceLabel} 的买家都常连带买 ${candidate.sku}`;
+  }
+  if ((candidate.reason_tags || []).includes('同日常搭配') && sourceLabel) {
+    return `${sourceLabel} 和 ${candidate.sku} 经常同日一起买（${candidate.same_day_count} 单）`;
+  }
+  if (sourceLabel) {
+    return `买过 ${sourceLabel} 的客户里，有 ${bestRatio} 也买过 ${candidate.sku}`;
+  }
+  return `${candidate.sku} 在相似客户里共购频率较高，可作为主推候选`;
+}
+
+function buildPitchDirection(actionType, strikeStatus, primaryRecommendation, topOwnedSkus, birthdayNear) {
+  if (!primaryRecommendation) return '暂无明确主推款，可先按客户最近成交款延续沟通。';
+  const sourceText = topOwnedSkus[0] ? `可从“上次拿的 ${topOwnedSkus[0]}”切入，` : '';
+  const birthdayText = birthdayNear ? '并顺带带生日权益话术，' : '';
+  if (actionType === 'must_follow_today' || actionType === 'upsell') {
+    return `${sourceText}${birthdayText}优先主推 ${primaryRecommendation.sku}，再带出共购备选款。`;
+  }
+  if (strikeStatus === '召回期') {
+    return `${sourceText}${birthdayText}先轻触达，再试探主推 ${primaryRecommendation.sku}。`;
+  }
+  return `${sourceText}${birthdayText}先建立兴趣，再顺势推荐 ${primaryRecommendation.sku}。`;
+}
+
+function getCustomerSkuKeys(profile) {
+  return Array.from(profile.skuCounter.keys()).filter(Boolean);
+}
+
+function buildSkuCoBuyMap(customers) {
+  const sourceCustomerCounts = new Map();
+  const relationMap = new Map();
+
+  for (const profile of customers.values()) {
+    const ownedSkuKeys = getCustomerSkuKeys(profile);
+    const uniqueSkuKeys = Array.from(new Set(ownedSkuKeys));
+    const sameDayPairs = new Set();
+    const ordersByDate = new Map();
+
+    for (const order of profile.recent_orders) {
+      const sku = text(order.sku);
+      if (!sku) continue;
+      const key = `${sku}__${text(order.factory) || '未知'}`;
+      if (!ordersByDate.has(order.date_key)) ordersByDate.set(order.date_key, new Set());
+      ordersByDate.get(order.date_key).add(key);
+    }
+
+    for (const skuKey of uniqueSkuKeys) {
+      sourceCustomerCounts.set(skuKey, (sourceCustomerCounts.get(skuKey) || 0) + 1);
+    }
+
+    for (const skuSet of ordersByDate.values()) {
+      const items = Array.from(skuSet);
+      for (const sourceKey of items) {
+        for (const targetKey of items) {
+          if (sourceKey === targetKey) continue;
+          sameDayPairs.add(`${sourceKey}=>${targetKey}`);
+        }
+      }
+    }
+
+    for (const sourceKey of uniqueSkuKeys) {
+      if (!relationMap.has(sourceKey)) relationMap.set(sourceKey, new Map());
+      const targets = relationMap.get(sourceKey);
+      for (const targetKey of uniqueSkuKeys) {
+        if (sourceKey === targetKey) continue;
+        const current = targets.get(targetKey) || { pairCount: 0, sameDayCount: 0 };
+        current.pairCount += 1;
+        if (sameDayPairs.has(`${sourceKey}=>${targetKey}`)) current.sameDayCount += 1;
+        targets.set(targetKey, current);
+      }
+    }
+  }
+
+  return { sourceCustomerCounts, relationMap };
+}
+
 function main() {
   if (!fs.existsSync(INPUT_FILE)) {
     throw new Error(`Input file not found: ${INPUT_FILE}`);
@@ -277,7 +432,7 @@ function main() {
 
   const source = readJson(INPUT_FILE);
   const rawRecords = Array.isArray(source.records) ? source.records : [];
-  const records = rawRecords.filter(record => !isExcludedPlatform(record) && isActiveEmployee(record) && (record.customer_name || record.phone));
+  const records = rawRecords.filter(record => !isExcludedPlatform(record) && (record.customer_name || record.phone));
   const now = new Date();
   const latestDate = getLatestDate(records, source.synced_at);
   const recentWindow = buildTrailingWindow(latestDate, ACTION_WINDOW_DAYS);
@@ -318,6 +473,7 @@ function main() {
       phone: normalizePhone(record.phone),
       employee: text(record.employee),
       platform: text(record.platform),
+      all_employees: new Set(text(record.employee) ? [text(record.employee)] : []),
       last_order_date: null,
       last_order_platform: null,
       last_order_sku: null,
@@ -327,16 +483,28 @@ function main() {
       orders_14d: 0,
       orders_180d: 0,
       revenue_180d: 0,
+      orders_365d: 0,
+      revenue_365d: 0,
+      orders_all: 0,
+      revenue_all: 0,
       return_orders_14d: 0,
       return_orders_180d: 0,
       skuCounter: new Map(),
     };
+
+    if (text(record.employee)) {
+      profile.all_employees.add(text(record.employee));
+    }
 
     if (!profile.last_order_date || date > profile.last_order_date) {
       profile.last_order_date = date;
       profile.last_order_platform = text(record.platform);
       profile.last_order_sku = text(record.sku_name);
       profile.last_order_tracking_no = text(record.tracking_no);
+      profile.employee = text(record.employee) || profile.employee;
+      profile.platform = text(record.platform) || profile.platform;
+      profile.customer_name = text(record.customer_name) || profile.customer_name;
+      profile.phone = normalizePhone(record.phone) || profile.phone;
     }
 
     profile.recent_orders.push({
@@ -344,15 +512,22 @@ function main() {
       date_key: toDateKey(date),
       platform: text(record.platform),
       sku: text(record.sku_name),
+      factory,
       tracking_no: text(record.tracking_no),
     });
     profile.unique_order_days.add(toDateKey(date));
 
     const diffDays = Math.floor((now - date) / DAY_MS);
+    profile.orders_all += 1;
+    profile.revenue_all += revenue;
     if (diffDays <= HISTORY_DAYS) {
       profile.orders_180d += 1;
       profile.revenue_180d += revenue;
       if (returned) profile.return_orders_180d += 1;
+    }
+    if (diffDays <= 365) {
+      profile.orders_365d += 1;
+      profile.revenue_365d += revenue;
     }
     if (isInWindow(date, recentWindow)) {
       profile.orders_14d += 1;
@@ -368,10 +543,13 @@ function main() {
     customers.set(key, profile);
   }
 
+  const { sourceCustomerCounts, relationMap } = buildSkuCoBuyMap(customers);
+
   const qualifiedSkus = Array.from(skuRecentStats.values())
     .map(item => {
       const rateStat = skuRateStats.get(item.key) || { orders: 0, returns: 0 };
       return {
+        key: item.key,
         name: item.name,
         factory: item.factory,
         platform: item.platform,
@@ -382,6 +560,7 @@ function main() {
     })
     .filter(item => item.orders >= 2 && item.returnRate <= 0.15 && item.revenue > 0)
     .sort((a, b) => b.revenue - a.revenue || b.orders - a.orders);
+  const qualifiedSkuMap = new Map(qualifiedSkus.map(item => [item.key, item]));
 
   const outputCustomers = Array.from(customers.values())
     .map(profile => {
@@ -396,8 +575,9 @@ function main() {
         repeatIntervals.push(Math.round((b - a) / DAY_MS));
       }
       const repeatMedianGap = percentile(repeatIntervals, 0.5);
-      const cadence = cadenceBucket(profile.last_order_platform || profile.platform, repeatMedianGap);
-      const strikeStatus = strikeWindowStatus(profile.last_order_platform || profile.platform, daysSinceLastOrder, repeatMedianGap);
+      const timing = dynamicTimingWindow(uniqueDays.length, repeatIntervals, daysSinceLastOrder);
+      const cadence = cadenceBucket(profile.last_order_platform || profile.platform, timing.expected_gap_days || repeatMedianGap);
+      const strikeStatus = timing.window_status;
       const isHighValue = profile.revenue_180d >= 2000;
       const hasReturnsPressure = profile.return_orders_14d >= 2 || returnRate180 > 0.35;
 
@@ -412,10 +592,10 @@ function main() {
       const birthdayNear = !!birthday?.birthday_is_near;
 
       let score = 0;
-      if (strikeStatus === '进入斩杀线') score += 30;
-      else if (strikeStatus === '召回期') score += 18;
-      else if (strikeStatus === '观察期') score += 6;
-      else if (strikeStatus === '冷却期') score -= 25;
+      if (timing.window_state === 'ready') score += 30;
+      else if (timing.window_state === 'late') score += 18;
+      else if (timing.window_state === 'cooldown') score -= 25;
+      else if (timing.window_state === 'dormant') score += 6;
 
       if (profile.orders_14d >= 3) score += 18;
       else if (profile.orders_14d >= 2) score += 12;
@@ -437,18 +617,72 @@ function main() {
       else if (returnRate180 > 0.2) score -= 10;
       if (birthdayNear && strikeStatus !== '冷却期') score += 10;
 
+      const strikeWindowScore = timing.window_state === 'ready' ? 30
+        : timing.window_state === 'late' ? 18
+        : timing.window_state === 'cooldown' ? -25
+        : timing.window_state === 'dormant' ? 6
+        : 0;
+      const orders14dScore = profile.orders_14d >= 3 ? 18
+        : profile.orders_14d >= 2 ? 12
+        : profile.orders_14d >= 1 ? 6
+        : 0;
+      const orders180dScore = profile.orders_180d >= 10 ? 16
+        : profile.orders_180d >= 5 ? 12
+        : profile.orders_180d >= 3 ? 8
+        : profile.orders_180d >= 2 ? 4
+        : 0;
+      const revenue180dScore = profile.revenue_180d >= 5000 ? 24
+        : profile.revenue_180d >= 3000 ? 18
+        : profile.revenue_180d >= 1500 ? 10
+        : profile.revenue_180d >= 500 ? 4
+        : 0;
+      const returnOrders14dScore = profile.return_orders_14d >= 2 ? -28
+        : profile.return_orders_14d === 1 ? -10
+        : 0;
+      const returnRate180dScore = returnRate180 > 0.35 ? -20
+        : returnRate180 > 0.2 ? -10
+        : 0;
+      const birthdayBonusScore = birthdayNear && timing.window_state !== 'cooldown' ? 10 : 0;
+
       let priorityTier = 'P2';
       let actionType = 'recall';
-      if (!hasReturnsPressure && strikeStatus === '进入斩杀线' && (score >= 55 || isHighValue)) {
+      if (!hasReturnsPressure && timing.window_state === 'ready' && (score >= 55 || isHighValue)) {
         priorityTier = 'P0';
         actionType = 'must_follow_today';
-      } else if (!hasReturnsPressure && strikeStatus === '进入斩杀线' && score >= 38) {
+      } else if (!hasReturnsPressure && timing.window_state === 'ready' && score >= 38) {
         priorityTier = 'P1';
         actionType = 'upsell';
       } else if (hasReturnsPressure) {
         priorityTier = 'Risk';
         actionType = 'risk_watch';
       }
+
+      const scoreBreakdown = {
+        total: score,
+        strike_status: strikeStatus,
+        strike_window: strikeWindowScore,
+        expected_gap_days: timing.expected_gap_days,
+        window_start: timing.window_start,
+        window_end: timing.window_end,
+        dormant_after: timing.dormant_after,
+        repeat_count: timing.repeat_count,
+        unique_order_days: timing.unique_order_days,
+        interval_p25: timing.interval_p25,
+        interval_median: timing.interval_median,
+        interval_p75: timing.interval_p75,
+        recent_interval_avg: timing.recent_interval_avg,
+        trend_ratio: timing.trend_ratio,
+        due_ratio: timing.due_ratio,
+        window_state: timing.window_state,
+        orders_14d: orders14dScore,
+        orders_180d: orders180dScore,
+        revenue_180d: revenue180dScore,
+        return_orders_14d: returnOrders14dScore,
+        return_rate_180d: returnRate180dScore,
+        birthday_bonus: birthdayBonusScore,
+        priority_tier: priorityTier,
+        action_type: actionType,
+      };
 
       const ownedSkus = new Set(Array.from(profile.skuCounter.keys()));
       const topOwnedSkus = Array.from(profile.skuCounter.entries())
@@ -463,35 +697,109 @@ function main() {
           date: item.date_key,
           platform: item.platform,
           sku: item.sku,
+          factory: item.factory,
           tracking_no: item.tracking_no,
         }));
 
-      const recentPlatforms = new Set(recentOrders.map(item => item.platform).filter(Boolean));
-      const recentSkuWords = new Set(recentOrders.flatMap(item => String(item.sku || '').split(/[\s·\/\-]+/).filter(Boolean)));
-      const recentCategories = new Set(recentOrders.map(item => detectCategory(item.sku)).filter(Boolean));
+      const recentSkuKeys = recentOrders
+        .map(item => item.sku ? `${item.sku}__${item.factory || '未知'}` : null)
+        .filter(Boolean);
+      const sourceSkuKeys = Array.from(new Set([...recentSkuKeys, ...ownedSkus]));
+      const candidateMap = new Map();
 
-      const recommendedSkus = qualifiedSkus
-        .filter(item => !ownedSkus.has(`${item.name}__${item.factory}`))
-        .map(item => {
-          let matchScore = item.revenue + item.orders * 100;
-          if (recentPlatforms.has(item.platform)) matchScore += 800;
-          const itemWords = String(item.name || '').split(/[\s·\/\-]+/).filter(Boolean);
-          if (itemWords.some(word => recentSkuWords.has(word))) matchScore += 600;
-          const itemCategory = detectCategory(item.name);
-          if (itemCategory && recentCategories.has(itemCategory)) matchScore += 1400;
-          if (itemCategory && birthdayCategories.has(itemCategory)) matchScore += 900;
-          return { ...item, matchScore };
+      for (const sourceKey of sourceSkuKeys) {
+        const relations = relationMap.get(sourceKey);
+        if (!relations) continue;
+        const sourceTotal = sourceCustomerCounts.get(sourceKey) || 0;
+        const sourceLabel = sourceKey.replace(/__/, ' · ');
+        for (const [targetKey, stats] of relations.entries()) {
+          if (ownedSkus.has(targetKey)) continue;
+          const target = qualifiedSkuMap.get(targetKey);
+          if (!target) continue;
+          const current = candidateMap.get(targetKey) || {
+            sku: target.name,
+            factory: target.factory,
+            pair_count: 0,
+            source_total: 0,
+            same_day_count: 0,
+            source_skus: [],
+            source_hit_count: 0,
+            support_sources: [],
+          };
+          current.pair_count += stats.pairCount;
+          current.same_day_count += stats.sameDayCount;
+          current.source_total += sourceTotal;
+          current.source_hit_count += 1;
+          if (!current.source_skus.includes(sourceLabel)) current.source_skus.push(sourceLabel);
+          current.support_sources.push({ sourceKey, sourceLabel, pairCount: stats.pairCount, sourceTotal, sameDayCount: stats.sameDayCount });
+          candidateMap.set(targetKey, current);
+        }
+      }
+
+      const recommendationCandidates = Array.from(candidateMap.values())
+        .map(candidate => {
+          const topSources = candidate.support_sources
+            .sort((a, b) => b.pairCount - a.pairCount || b.sourceTotal - a.sourceTotal)
+            .slice(0, 2);
+          candidate.source_skus = topSources.map(item => item.sourceLabel);
+          candidate.best_pair_count = topSources[0]?.pairCount || 0;
+          candidate.best_source_total = topSources[0]?.sourceTotal || 0;
+          candidate.pair_count = topSources.reduce((sum, item) => sum + item.pairCount, 0);
+          candidate.same_day_count = topSources.reduce((sum, item) => sum + item.sameDayCount, 0);
+          candidate.conversion_rate = candidate.best_source_total > 0 ? candidate.best_pair_count / candidate.best_source_total : 0;
+          const score = candidate.pair_count * 1000 + candidate.conversion_rate * 10000 + candidate.source_hit_count * 500 + ((qualifiedSkuMap.get(`${candidate.sku}__${candidate.factory}`)?.revenue || 0) / 10);
+          const tags = [];
+          if (candidate.pair_count >= 5) tags.push('共购高频');
+          if (candidate.source_hit_count >= 2) tags.push('多源命中');
+          if (candidate.same_day_count >= 2) tags.push('同日常搭配');
+          if (birthdayNear && birthdayCategories.has(detectCategory(candidate.sku))) tags.push('生日加权');
+          if (!tags.length) tags.push('共购命中');
+          const confidence = recommendationConfidence(candidate.pair_count, candidate.conversion_rate, candidate.source_hit_count);
+          const result = {
+            sku: candidate.sku,
+            factory: candidate.factory,
+            confidence,
+            score: Number(score.toFixed(0)),
+            pair_count: candidate.pair_count,
+            source_total: candidate.best_source_total,
+            same_day_count: candidate.same_day_count,
+            best_pair_count: candidate.best_pair_count,
+            conversion_rate: Number((candidate.conversion_rate * 100).toFixed(1)),
+            reason_tags: tags,
+            source_skus: candidate.source_skus,
+            label: `${candidate.sku} · ${candidate.factory}`,
+          };
+          result.reason = recommendationReason(result);
+          return result;
         })
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 3)
-        .map(item => `${item.name} · ${item.factory}`);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
 
-      let actionReason = '历史有成交记录，但尚未进入主动加推窗口，适合常规召回';
-      if (actionType === 'must_follow_today') actionReason = `已进入${cadence}客户的斩杀线，建议优先联系`;
-      else if (actionType === 'upsell') actionReason = `已进入${cadence}客户的加推窗口，可顺势促单`;
+      const primaryRecommendation = recommendationCandidates[0] || null;
+      const secondaryRecommendations = recommendationCandidates.slice(1);
+      const recommendedSkus = recommendationCandidates.map(item => item.label);
+
+      let actionReason = `预计复购周期约 ${timing.expected_gap_days} 天，当前距上次下单 ${daysSinceLastOrder ?? '-'} 天`;
+      if (actionType === 'must_follow_today') actionReason = `已进入个人${cadence}触达窗口，建议优先联系`;
+      else if (actionType === 'upsell') actionReason = `已进入个人${cadence}加推窗口，可顺势促单`;
       else if (actionType === 'risk_watch') actionReason = '近14天退货压力偏高，建议先观察后触达';
-      if (birthdayNear && strikeStatus !== '冷却期') {
+      else if (timing.window_state === 'cooldown') actionReason = `距离个人预计窗口还有 ${Math.max((timing.window_start || 0) - (daysSinceLastOrder || 0), 0)} 天，暂不宜过早触达`;
+      else if (timing.window_state === 'late') actionReason = `已超过个人最佳窗口，建议尽快召回`;
+      else if (timing.window_state === 'dormant') actionReason = `已超过个人沉睡阈值 ${timing.dormant_after} 天，建议按沉睡客户策略触达`;
+      if (birthdayNear && timing.window_state !== 'cooldown') {
         actionReason += ' · 生日近7天，可结合生日权益触达';
+      }
+
+      const recommendationSummary = primaryRecommendation
+        ? `主推 ${primaryRecommendation.label}；${primaryRecommendation.reason}`
+        : '暂无明确主推款，建议先按最近成交款做常规跟进';
+      const pitchDirection = buildPitchDirection(actionType, strikeStatus, primaryRecommendation, topOwnedSkus, birthdayNear);
+      const avoidRecommendations = [];
+      if (hasReturnsPressure) {
+        avoidRecommendations.push({ sku: '高退货款', reason: '客户当前退货压力偏高，避免强推高风险款' });
+      }
+      if (profile.last_order_sku) {
+        avoidRecommendations.push({ sku: profile.last_order_sku, reason: '客户刚买过同款，短期内不建议重复硬推' });
       }
 
       return {
@@ -499,6 +807,7 @@ function main() {
         customer_name: profile.customer_name,
         phone: profile.phone,
         employee: profile.employee,
+        all_employees: Array.from(profile.all_employees || []),
         platform: profile.platform,
         last_order_date: lastDate ? toDateKey(lastDate) : null,
         last_order_platform: profile.last_order_platform,
@@ -509,15 +818,37 @@ function main() {
         repeat_median_gap: repeatMedianGap,
         platform_cadence_bucket: cadence,
         strike_window_status: strikeStatus,
+        window_state: timing.window_state,
+        expected_gap_days: timing.expected_gap_days,
+        window_start: timing.window_start,
+        window_end: timing.window_end,
+        dormant_after: timing.dormant_after,
+        repeat_count: timing.repeat_count,
+        unique_order_days: timing.unique_order_days,
+        interval_p25: timing.interval_p25,
+        interval_median: timing.interval_median,
+        interval_p75: timing.interval_p75,
+        recent_interval_avg: timing.recent_interval_avg,
+        trend_ratio: timing.trend_ratio,
+        due_ratio: timing.due_ratio,
         orders_14d: profile.orders_14d,
         orders_90d: profile.orders_14d,
         orders_180d: profile.orders_180d,
+        orders_365d: profile.orders_365d,
+        orders_all: profile.orders_all,
         revenue_180d: Math.round(profile.revenue_180d),
+        revenue_365d: Math.round(profile.revenue_365d),
+        revenue_all: Math.round(profile.revenue_all),
         return_orders_14d: profile.return_orders_14d,
         return_orders_90d: profile.return_orders_14d,
         return_rate_180d: Number((returnRate180 * 100).toFixed(1)),
         top_skus: topOwnedSkus,
         recommended_skus: recommendedSkus,
+        primary_recommendation: primaryRecommendation,
+        secondary_recommendations: secondaryRecommendations,
+        recommendation_summary: recommendationSummary,
+        pitch_direction: pitchDirection,
+        avoid_recommendations: avoidRecommendations,
         birthday_match_confidence: birthdayConfidence,
         birthday_member_name: birthday?.member_name || null,
         birthday_phone: birthday?.member_phone || null,
@@ -529,6 +860,7 @@ function main() {
         birthday_reminder_window: birthdayNear ? '生日近7天' : null,
         birthday_style_preferences: birthdayStyleTags,
         birthday_expected_gift: birthday?.expected_gift || null,
+        score_breakdown: scoreBreakdown,
         priority_score: score,
         priority_tier: priorityTier,
         action_type: actionType,
@@ -559,7 +891,7 @@ function main() {
     window_days: ACTION_WINDOW_DAYS,
     return_rate_lag_days: RETURN_RATE_LAG_DAYS,
     summary,
-    customers: outputCustomers.slice(0, 600),
+    customers: outputCustomers,
   };
 
   writeJsonAtomically(OUTPUT_FILE, TMP_FILE, result);

@@ -665,15 +665,14 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
           <thead style="position:sticky;top:0;z-index:10">
             <tr>
               <th class="sortable" data-table="orders" data-field="customer_name" onclick="sortOrders('customer_name')">客户名 <span class="arrow"></span></th>
-              <th>货品名</th>
-              <th class="sortable" data-table="orders" data-field="employee" onclick="sortOrders('employee')">员工 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="factory" onclick="sortOrders('factory')">厂家 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="tracking_no" onclick="sortOrders('tracking_no')">单号 <span class="arrow"></span></th>
-              <th>平台</th>
-              <th class="sortable" data-table="orders" data-field="revenue" onclick="sortOrders('revenue')">收款 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="cost" onclick="sortOrders('cost')">成本 <span class="arrow"></span></th>
-              <th>状态</th>
+              <th class="sortable" data-table="orders" data-field="phone" onclick="sortOrders('phone')">手机号 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="platform" onclick="sortOrders('platform')">平台 <span class="arrow"></span></th>
               <th class="sortable" data-table="orders" data-field="pay_date" onclick="sortOrders('pay_date')">付款日期 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="factory" onclick="sortOrders('factory')">厂家 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="sku_name" onclick="sortOrders('sku_name')">货品名 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="revenue" onclick="sortOrders('revenue')">收款金额 <span class="arrow"></span></th>
+              <th>状态</th>
+              <th class="sortable" data-table="orders" data-field="return_tracking" onclick="sortOrders('return_tracking')">退货单号 <span class="arrow"></span></th>
             </tr>
           </thead>
           <tbody id="orderBody"></tbody>
@@ -884,8 +883,8 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
       <div class="panel-body">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
           <button class="search-btn" id="customerFilterAll" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('all')">全部（--）</button>
-          <button class="search-btn" id="customerFilterReady" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('进入斩杀线')">进入斩杀线（--）</button>
-          <button class="search-btn" id="customerFilterRecall" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('召回期')">召回期（--）</button>
+          <button class="search-btn" id="customerFilterReady" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('可触达')">可触达（--）</button>
+          <button class="search-btn" id="customerFilterRecall" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('已超窗')">已超窗（--）</button>
           <button class="search-btn" id="customerFilterRisk" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('Risk')">风险观察（--）</button>
           <button class="search-btn" id="customerFilterBirthday" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('BirthdayNear')">生日临近（--）</button>
           <button class="search-btn" id="customerFilterP0P1" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('P0P1')">P0/P1（--）</button>
@@ -893,7 +892,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
         <div class="table-wrap" style="max-height:420px;overflow-y:auto">
           <table>
             <thead>
-              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">斩杀线 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_180d" onclick="sortDataTable('customerPriority','revenue_180d')">180天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th>最近三单</th><th>推荐SKU</th></tr>
+              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">触达时机 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_365d" onclick="sortDataTable('customerPriority','revenue_365d')">365天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_all" onclick="sortDataTable('customerPriority','revenue_all')">累计总金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th>最近三单</th><th>共购推荐</th></tr>
             </thead>
             <tbody id="customerPriorityBody"></tbody>
           </table>
@@ -911,6 +910,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
       </div>
       <div class="panel-body">
         <div id="customerHistorySummary" style="font-size:13px;color:var(--text-mid);margin-bottom:16px"></div>
+        <div id="customerHistoryReason" class="alert alert-info" style="margin-bottom:16px;display:none"></div>
         <div class="table-wrap" style="max-height:360px;overflow-y:auto">
           <table>
             <thead>
@@ -1004,15 +1004,14 @@ function renderOrders() {
     const statusClass = isReturn ? 'tag-danger' : (r.is_paid === '已打款' ? 'tag-ok' : 'tag-warn');
     return `<tr>
       <td style="font-weight:500">${r.customer_name || '-'}</td>
-      <td>${r.sku_name || '-'}</td>
-      <td>${r.employee || '-'}</td>
-      <td style="color:var(--text-mid)">${r.factory || '-'}</td>
-      <td style="font-family:var(--mono);font-size:12px">${r.tracking_no || '-'}</td>
+      <td style="font-family:var(--mono)">${r.phone || '-'}</td>
       <td>${r.platform || '-'}</td>
-      <td style="font-family:var(--mono)">¥${r.revenue || '0'}</td>
-      <td style="font-family:var(--mono)">¥${r.cost || '0'}</td>
-      <td><span class="tag ${statusClass}">${isReturn ? refundType : (r.status || '-')}</span></td>
       <td style="font-family:var(--mono);font-size:12px">${formatDateTime(r.pay_date || r.order_date || r.ship_date)}</td>
+      <td style="color:var(--text-mid)">${r.factory || '-'}</td>
+      <td>${r.sku_name || '-'}</td>
+      <td style="font-family:var(--mono)">¥${r.revenue || '0'}</td>
+      <td><span class="tag ${statusClass}">${isReturn ? refundType : (r.status || '-')}</span></td>
+      <td style="font-family:var(--mono);font-size:12px">${r.return_tracking || '-'}</td>
     </tr>`;
   }).join('');
 }
@@ -1022,27 +1021,46 @@ function liveSearch() {
   window._orderSearchTimer = setTimeout(filterOrders, 300);
 }
 
+function getOrderSearchScore(record, query) {
+  if (!query) return 0;
+  const tracking = String(record.tracking_no || '').toLowerCase();
+  const customer = String(record.customer_name || '').toLowerCase();
+  const customerInfo = String(record.customer_info || '').toLowerCase();
+  const sku = String(record.sku_name || '').toLowerCase();
+  const factory = String(record.factory || '').toLowerCase();
+  const employee = String(record.employee || '').toLowerCase();
+  const platform = String(record.platform || '').toLowerCase();
+  const phone = String(record.phone || '').toLowerCase();
+  const phoneDigits = phone.replace(/\D/g, '');
+  const queryDigits = query.replace(/\D/g, '');
+  const address = String(record.address || '').toLowerCase();
+
+  if (tracking.includes(query)) return 500;
+  if (queryDigits && phoneDigits.includes(queryDigits)) return 400;
+  if (customer.includes(query) || customerInfo.includes(query)) return 300;
+  if (sku.includes(query)) return 200;
+  if (factory.includes(query)) return 100;
+  if (employee.includes(query) || platform.includes(query) || address.includes(query)) return 50;
+  return 0;
+}
+
 function filterOrders() {
   const q = document.getElementById('orderSearch').value.trim().toLowerCase();
   const filter = document.getElementById('orderFilter').value;
-  
+
   // Show loading state
   document.getElementById('orderSummary').textContent = '搜索中...';
-  
+
   // Use requestAnimationFrame to not block UI
   requestAnimationFrame(() => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
     const monthAgo = new Date(now - 30*86400000).toISOString().split('T')[0];
-    
+
     filteredOrders = orderData.records.filter(r => {
-      // Text search
-      if (q) {
-        const searchStr = `${r.customer_name} ${r.sku_name} ${r.tracking_no} ${r.factory} ${r.employee} ${r.platform} ${r.phone} ${r.address}`.toLowerCase();
-        if (!searchStr.includes(q)) return false;
-      }
-      
+      if (q && getOrderSearchScore(r, q) === 0) return false;
+
       // Filter
       if (filter === 'today' && r.pay_date && !r.pay_date.startsWith(today)) return false;
       if (filter === 'week' && r.pay_date && r.pay_date.split(' ')[0] < weekAgo) return false;
@@ -1052,12 +1070,23 @@ function filterOrders() {
         if (rt === '0' || rt === '') return false;
       }
       if (filter === 'unpaid' && r.is_paid === '已打款') return false;
-      
+
       return true;
     });
 
+    if (q) {
+      filteredOrders.sort((a, b) => {
+        const scoreDiff = getOrderSearchScore(b, q) - getOrderSearchScore(a, q);
+        if (scoreDiff !== 0) return scoreDiff;
+        const dateA = getSortValue(a, 'pay_date');
+        const dateB = getSortValue(b, 'pay_date');
+        return String(dateB || '').localeCompare(String(dateA || ''));
+      });
+    } else {
+      applyCurrentSort();
+    }
+
     orderVisibleCount = PAGE_SIZE;
-    applyCurrentSort();
     updateSortArrows();
     renderOrders();
   });
@@ -1193,9 +1222,41 @@ function getDataTableValue(item, field) {
     return { P0: 0, P1: 1, P2: 2, Risk: 3 }[item[field]] ?? 99;
   }
   if (field === 'strike_window_status') {
-    return { '进入斩杀线': 0, '观察期': 1, '召回期': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
+    return { '可触达': 0, '已超窗': 1, '沉睡': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
   }
   return item[field];
+}
+
+function renderRecommendationTags(tags) {
+  return (tags || []).slice(0, 2).map(tag => {
+    const cls = tag === '生日加权' ? 'tag-warn'
+      : tag === '共购高频' ? 'tag-ok'
+      : tag === '多源命中' ? 'tag-ok'
+      : 'tag-steel';
+    return `<span class="tag ${cls}">${tag}</span>`;
+  }).join(' ');
+}
+
+function renderRecommendationBlock(customer, options = {}) {
+  const compact = !!options.compact;
+  const primary = customer.primary_recommendation || null;
+  const backups = customer.secondary_recommendations || [];
+
+  if (!primary) {
+    const fallback = (customer.recommended_skus || []).slice(0, compact ? 2 : 1).join(' / ');
+    return fallback || '暂无';
+  }
+
+  const backupText = backups.map(item => item.label || `${item.sku || '-'} · ${item.factory || '-'}`).join(' / ');
+  const tagHtml = renderRecommendationTags(primary.reason_tags);
+  if (compact) {
+    return `主推：${primary.label || primary.sku || '-'}${backupText ? ` · 共购备选：${backupText}` : ''}${primary.reason ? ` · 原因：${primary.reason}` : ''}`;
+  }
+
+  return `<div style="font-weight:600">${primary.label || primary.sku || '-'}</div>
+    <div style="margin-top:4px">${tagHtml || '<span class="tag tag-steel">推荐</span>'}</div>
+    <div style="margin-top:4px;font-size:11px;color:var(--text-dim)">${customer.recommendation_summary || primary.reason || '-'}</div>
+    <div style="margin-top:4px;font-size:11px;color:var(--text-mid)">备选：${backupText || '暂无'}</div>`;
 }
 
 function sortDataTableItems(items, tableName) {
@@ -1548,8 +1609,8 @@ function renderTeamSection() {
           <div class="emp-stat-value">${emp.orders || 0}</div>
         </div>
         <div class="emp-stat">
-          <div class="emp-stat-label">14天退货</div>
-          <div class="emp-stat-value">${emp.returns || 0}</div>
+          <div class="emp-stat-label">日均单量</div>
+          <div class="emp-stat-value">${emp.avg_daily_orders == null ? '-' : emp.avg_daily_orders}</div>
         </div>
       </div>
       <div class="emp-bar"><div class="emp-bar-fill ${barClass}" style="width:${barWidth}%"></div></div>
@@ -1579,9 +1640,28 @@ function getCustomerHistoryRecords(customer) {
     }));
 }
 
+function renderScoreBreakdownTags(breakdown) {
+  if (!breakdown) return '';
+  const items = [
+    ['窗口', breakdown.strike_window],
+    ['14天单量', breakdown.orders_14d],
+    ['180天单量', breakdown.orders_180d],
+    ['180天金额', breakdown.revenue_180d],
+    ['14天退货', breakdown.return_orders_14d],
+    ['180天退货率', breakdown.return_rate_180d],
+    ['生日加权', breakdown.birthday_bonus],
+  ].filter(([, value]) => value);
+  return items.map(([label, value]) => {
+    const cls = value > 0 ? 'tag-ok' : 'tag-danger';
+    const prefix = value > 0 ? '+' : '';
+    return `<span class="tag ${cls}">${label} ${prefix}${value}</span>`;
+  }).join(' ');
+}
+
 function renderCustomerHistory() {
   if (!selectedCustomerKey || !customerActionData) {
     document.getElementById('customerHistoryPanel').style.display = 'none';
+    document.getElementById('customerHistoryReason').style.display = 'none';
     customerHistoryVisibleCount = 20;
     return;
   }
@@ -1589,14 +1669,19 @@ function renderCustomerHistory() {
   const customer = (customerActionData.customers || []).find(c => c.customer_key === selectedCustomerKey);
   if (!customer) {
     document.getElementById('customerHistoryPanel').style.display = 'none';
+    document.getElementById('customerHistoryReason').style.display = 'none';
     return;
   }
 
   const records = sortDataTableItems(getCustomerHistoryRecords(customer), 'customerHistory');
   const visibleRecords = records.slice(0, customerHistoryVisibleCount);
+  const reasonBox = document.getElementById('customerHistoryReason');
+  const breakdown = customer.score_breakdown || null;
   document.getElementById('customerHistoryPanel').style.display = 'block';
   document.getElementById('customerHistoryMeta').textContent = `${visibleRecords.length} / ${records.length} 条历史订单`;
-  document.getElementById('customerHistorySummary').textContent = `${customer.customer_name || '-'} · 手机 ${customer.phone || '-'} · 负责人 ${customer.employee || '-'} · 最近下单 ${customer.last_order_date || '-'} · 180天金额 ¥${(customer.revenue_180d || 0).toLocaleString()} · 生日 ${customer.birthday_month_day || '-'}${customer.birthday_days_until != null ? `（${customer.birthday_days_until}天后）` : ''} · 偏好 ${((customer.birthday_style_preferences || []).slice(0,3).join('/') || '-') } · 期待礼物 ${customer.birthday_expected_gift || '-'}`;
+  document.getElementById('customerHistorySummary').textContent = `${customer.customer_name || '-'} · 手机 ${customer.phone || '-'} · 负责人 ${customer.employee || '-'} · 最近下单 ${customer.last_order_date || '-'} · 365天金额 ¥${(customer.revenue_365d || 0).toLocaleString()} · 累计总金额 ¥${(customer.revenue_all || 0).toLocaleString()} · 生日 ${customer.birthday_month_day || '-'}${customer.birthday_days_until != null ? `（${customer.birthday_days_until}天后）` : ''} · 偏好 ${((customer.birthday_style_preferences || []).slice(0,3).join('/') || '-') } · 期待礼物 ${customer.birthday_expected_gift || '-'}`;
+  reasonBox.style.display = 'block';
+  reasonBox.innerHTML = `<div class="alert-title">触达说明</div><div class="alert-body">优先分 ${customer.priority_score ?? '-'} · ${customer.priority_tier || '-'} · ${customer.strike_window_status || '-'}${customer.expected_gap_days ? ` · 预计周期 ${customer.expected_gap_days}天` : ''}<br>${customer.action_reason || '暂无促单理由'}${customer.window_start != null && customer.window_end != null ? `<br>建议窗口：第 ${customer.window_start} ~ ${customer.window_end} 天` : ''}${customer.dormant_after ? ` · 沉睡阈值 ${customer.dormant_after} 天` : ''}<br>${customer.recommendation_summary || '暂无推荐说明'}${customer.pitch_direction ? `<br>建议话术：${customer.pitch_direction}` : ''}<div style="margin-top:8px">${renderScoreBreakdownTags(breakdown)}</div></div>`;
   document.getElementById('customerHistoryBody').innerHTML = visibleRecords.map(r => `<tr><td style="font-family:var(--mono)">${r.date_display || '-'}</td><td>${r.customer_name}</td><td style="font-family:var(--mono)">${r.phone}</td><td>${r.platform}</td><td>${r.sku_name}</td><td>${r.factory}</td><td>${r.refund_info}</td><td>${r.refund_reason}</td><td style="font-family:var(--mono)">¥${(Number(r.revenue) || 0).toLocaleString()}</td></tr>`).join('') || '<tr><td colspan="9">暂无历史订单</td></tr>';
   document.getElementById('customerHistoryMoreBtn').style.display = records.length > visibleRecords.length ? 'inline-flex' : 'none';
   updateDataTableArrows('customerHistory');
@@ -1620,8 +1705,8 @@ function renderCustomerSections() {
 
   const customerBuckets = {
     all: customers,
-    '进入斩杀线': customers.filter(c => c.strike_window_status === '进入斩杀线'),
-    '召回期': customers.filter(c => c.strike_window_status === '召回期'),
+    '可触达': customers.filter(c => c.strike_window_status === '可触达'),
+    '已超窗': customers.filter(c => c.strike_window_status === '已超窗' || c.strike_window_status === '沉睡'),
     'Risk': customers.filter(c => c.priority_tier === 'Risk'),
     'BirthdayNear': customers.filter(c => c.birthday_is_near),
     'P0P1': customers.filter(c => c.priority_tier === 'P0' || c.priority_tier === 'P1'),
@@ -1643,24 +1728,25 @@ function renderCustomerSections() {
     <td>${c.employee || '-'}</td>
     <td style="font-family:var(--mono)">${c.priority_score ?? '-'}</td>
     <td><span class="tag ${c.priority_tier === 'P0' ? 'tag-danger' : c.priority_tier === 'P1' ? 'tag-ok' : c.priority_tier === 'P2' ? 'tag-warn' : 'tag-steel'}">${c.priority_tier}</span></td>
-    <td><span class="tag ${c.strike_window_status === '进入斩杀线' ? 'tag-ok' : c.strike_window_status === '观察期' ? 'tag-warn' : c.strike_window_status === '召回期' ? 'tag-steel' : 'tag-danger'}">${c.strike_window_status || '-'}</span></td>
+    <td><span class="tag ${c.strike_window_status === '可触达' ? 'tag-ok' : c.strike_window_status === '已超窗' ? 'tag-warn' : c.strike_window_status === '沉睡' ? 'tag-steel' : c.strike_window_status === '冷却期' ? 'tag-danger' : 'tag-steel'}">${c.strike_window_status || '-'}</span></td>
     <td style="font-family:var(--mono)">${c.birthday_month_day || '-'}${c.birthday_days_until != null ? ` / ${c.birthday_days_until}天` : ''}</td>
-    <td style="font-family:var(--mono)">¥${(c.revenue_180d || 0).toLocaleString()}</td>
+    <td style="font-family:var(--mono)">¥${(c.revenue_365d || 0).toLocaleString()}</td>
+    <td style="font-family:var(--mono)">¥${(c.revenue_all || 0).toLocaleString()}</td>
     <td style="font-family:var(--mono)">${c.last_order_date || '-'} / ${c.days_since_last_order ?? '-'}天</td>
     <td>${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join('<br>') || '-'}</td>
-    <td>${(c.recommended_skus || []).slice(0,2).join(' / ') || '-'}</td>
+    <td>${renderRecommendationBlock(c)}</td>
   </tr>`).join('');
   updateDataTableArrows('customerPriority');
   document.getElementById('customerMoreBtn').style.display = sortedCustomers.length > customerVisibleCount ? 'inline-flex' : 'none';
   document.getElementById('customerFilterAll').style.background = customerFilterMode === 'all' ? 'var(--surface-elevated)' : 'var(--surface)';
-  document.getElementById('customerFilterReady').style.background = customerFilterMode === '进入斩杀线' ? 'var(--surface-elevated)' : 'var(--surface)';
-  document.getElementById('customerFilterRecall').style.background = customerFilterMode === '召回期' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterReady').style.background = customerFilterMode === '可触达' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterRecall').style.background = customerFilterMode === '已超窗' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterRisk').style.background = customerFilterMode === 'Risk' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterBirthday').style.background = customerFilterMode === 'BirthdayNear' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterP0P1').style.background = customerFilterMode === 'P0P1' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterAll').textContent = `全部（${customerBuckets.all.length}）`;
-  document.getElementById('customerFilterReady').textContent = `进入斩杀线（${customerBuckets['进入斩杀线'].length}）`;
-  document.getElementById('customerFilterRecall').textContent = `召回期（${customerBuckets['召回期'].length}）`;
+  document.getElementById('customerFilterReady').textContent = `可触达（${customerBuckets['可触达'].length}）`;
+  document.getElementById('customerFilterRecall').textContent = `已超窗（${customerBuckets['已超窗'].length}）`;
   document.getElementById('customerFilterRisk').textContent = `风险观察（${customerBuckets['Risk'].length}）`;
   document.getElementById('customerFilterBirthday').textContent = `生日临近（${customerBuckets['BirthdayNear'].length}）`;
   document.getElementById('customerFilterP0P1').textContent = `P0/P1（${customerBuckets['P0P1'].length}）`;
@@ -1671,7 +1757,7 @@ function renderCustomerSections() {
     <div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div>
     <div>
       <div class="action-title">联系 ${c.customer_name || '客户'} · ${c.priority_tier}</div>
-      <div class="action-desc">负责人：${c.employee || '-'} · 节奏：${c.platform_cadence_bucket || '-'} · 斩杀线：${c.strike_window_status || '-'}${c.birthday_is_near ? ` · 生日 ${c.birthday_month_day || ''}` : ''} · 上次下单：${formatDateTime(c.last_order_date)} · 最近三单：${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join(' ｜ ') || '-'} · 推荐：${(c.recommended_skus || []).join(' / ') || '暂无'} · ${c.action_reason || ''}</div>
+      <div class="action-desc">负责人：${c.employee || '-'} · 节奏：${c.platform_cadence_bucket || '-'} · 斩杀线：${c.strike_window_status || '-'}${c.birthday_is_near ? ` · 生日 ${c.birthday_month_day || ''}` : ''} · 上次下单：${formatDateTime(c.last_order_date)} · 最近三单：${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join(' ｜ ') || '-'} · ${renderRecommendationBlock(c, { compact: true })} · ${c.action_reason || ''}</div>
     </div>
   </div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无可执行加推动作</div><div class="alert-body">当前客户分层没有 P0 / P1 名单。</div></div>';
 
@@ -1679,7 +1765,7 @@ function renderCustomerSections() {
   document.getElementById('riskAlertsBody').innerHTML = riskCustomers.map(c => `<div class="alert alert-danger" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · 风险观察</div><div class="alert-body">负责人：${c.employee || '-'} · 近90天退货 ${c.return_orders_90d || 0} 次 · 180天退货率 ${c.return_rate_180d || 0}%</div></div>`).join('') || '<div class="alert alert-jade"><div class="alert-title">暂无风险样本</div><div class="alert-body">当前没有风险观察客户。</div></div>';
 
   const opportunities = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 3);
-  document.getElementById('opportunityAlertsBody').innerHTML = opportunities.map(c => `<div class="alert alert-jade" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · ${c.priority_tier}</div><div class="alert-body">平台：${c.platform || '-'} · 推荐：${(c.recommended_skus || []).slice(0, 2).join(' / ') || '暂无'} · ${c.action_reason || ''}</div></div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无机会样本</div><div class="alert-body">当前没有高优先客户。</div></div>';
+  document.getElementById('opportunityAlertsBody').innerHTML = opportunities.map(c => `<div class="alert alert-jade" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · ${c.priority_tier}</div><div class="alert-body">平台：${c.platform || '-'} · ${renderRecommendationBlock(c, { compact: true })} · ${c.action_reason || ''}</div></div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无机会样本</div><div class="alert-body">当前没有高优先客户。</div></div>';
 }
 
 function loadStaticCharts(sec) {

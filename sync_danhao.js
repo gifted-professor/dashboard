@@ -4,6 +4,7 @@
  * - orders_live.json: 汇总全量表（经营统计、客户聚合使用）
  * - orders_realtime.json: 实时视图 + 汇总表合并（订单页使用）
  * - birthday_members.json: 会员生日表（客户池补充信息）
+ * - duty_schedule.json: 客服值班表（团队日均单量使用）
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -79,10 +80,17 @@ function loadSyncConfig() {
     fullSource: buildSource(sources.full, '账单汇总_全部/汇总(全部)', 'orders_live.json'),
     realtimeSource: buildSource(sources.realtime, '单号查询/库存管理/实时视图', 'orders_realtime.json'),
     birthdaySource: buildSource(sources.birthday, '单号查询/会员生日', 'birthday_members.json'),
+    dutySource: buildSource(sources.duty, '单号查询/值班表', 'duty_schedule.json'),
   };
 }
 
-const { profile: PROFILE, fullSource: FULL_SOURCE, realtimeSource: REALTIME_SOURCE, birthdaySource: BIRTHDAY_SOURCE } = loadSyncConfig();
+const {
+  profile: PROFILE,
+  fullSource: FULL_SOURCE,
+  realtimeSource: REALTIME_SOURCE,
+  birthdaySource: BIRTHDAY_SOURCE,
+  dutySource: DUTY_SOURCE,
+} = loadSyncConfig();
 
 function parseCliJson(output) {
   const start = output.indexOf('{');
@@ -211,6 +219,20 @@ function mapBirthdayRecord(fields, row, recordId) {
   };
 }
 
+function mapDutyRecord(fields, row, recordId) {
+  const raw = {};
+  fields.forEach((fieldName, idx) => {
+    raw[fieldName] = row[idx];
+  });
+
+  return {
+    record_id: recordId,
+    employee: text(raw['客服']) || text(raw['客服姓名']) || text(raw['多选姓名']),
+    duty_date: text(raw['上班时间']) || text(raw['当天日期']),
+    shift: text(raw['班次']),
+  };
+}
+
 function fetchPage(source, offset) {
   const viewPart = source.viewId ? ` --view-id "${source.viewId}"` : '';
   const command = `LARK_CLI_NO_PROXY=1 "${LARK_CLI}" base "+record-list" --base-token "${source.baseToken}" --table-id "${source.tableId}"${viewPart} --profile "${PROFILE}" --limit ${LIMIT} --offset ${offset}`;
@@ -239,6 +261,10 @@ function isDisplayableOrder(record) {
 
 function isDisplayableBirthday(record) {
   return !!(record.member_name || record.member_phone || record.member_birthday);
+}
+
+function isDisplayableDuty(record) {
+  return !!(record.employee && record.duty_date);
 }
 
 function syncSource(source, mapper, filterFn) {
@@ -283,26 +309,65 @@ function recordDate(record) {
 }
 
 function dedupeKey(record) {
-  const tracking = text(record.tracking_no);
-  if (tracking) return `tracking:${tracking}`;
-
   const customer = text(record.customer_name) || '';
   const phone = text(record.phone) || '';
   const sku = text(record.sku_name) || '';
   const payDate = text(record.pay_date) || '';
   const orderDate = text(record.order_date) || '';
   const platform = text(record.platform) || '';
-  return `fallback:${customer}|${phone}|${sku}|${payDate}|${orderDate}|${platform}`;
+  const factory = text(record.factory) || '';
+  const revenue = record.revenue != null ? String(record.revenue) : '';
+  const tracking = text(record.tracking_no) || '';
+
+  return `order:${customer}|${phone}|${sku}|${payDate}|${orderDate}|${platform}|${factory}|${revenue}|${tracking}`;
+}
+
+function sparseDedupeKey(record) {
+  const customer = text(record.customer_name) || '';
+  const phone = text(record.phone) || '';
+  const sku = text(record.sku_name) || '';
+  const payDate = text(record.pay_date) || '';
+  const platform = text(record.platform) || '';
+  const factory = text(record.factory) || '';
+  const revenue = record.revenue != null ? String(record.revenue) : '';
+  return `sparse:${customer}|${phone}|${sku}|${payDate}|${platform}|${factory}|${revenue}`;
+}
+
+function recordRichness(record) {
+  return (text(record.tracking_no) ? 4 : 0)
+    + (text(record.order_date) ? 2 : 0)
+    + (text(record.ship_date) ? 1 : 0);
 }
 
 function mergeRealtimeRecords(realtimeRecords, historicalRecords) {
   const merged = [];
-  const seen = new Set();
+  const seenTracking = new Set();
+  const seenSparseTracked = new Set();
+  const seenSparseLoose = new Set();
+  const candidates = [
+    ...realtimeRecords.map(record => ({ record, sourcePriority: 0 })),
+    ...historicalRecords.map(record => ({ record, sourcePriority: 1 })),
+  ].sort((a, b) => {
+    const richnessDiff = recordRichness(b.record) - recordRichness(a.record);
+    if (richnessDiff !== 0) return richnessDiff;
+    return a.sourcePriority - b.sourcePriority;
+  });
 
-  for (const record of [...realtimeRecords, ...historicalRecords]) {
+  for (const { record } of candidates) {
+    const tracking = text(record.tracking_no);
     const key = dedupeKey(record);
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const sparseKey = sparseDedupeKey(record);
+
+    if (tracking) {
+      if (seenTracking.has(tracking)) continue;
+      seenTracking.add(tracking);
+      seenSparseTracked.add(sparseKey);
+      merged.push(record);
+      continue;
+    }
+
+    if (seenSparseTracked.has(sparseKey) || seenSparseLoose.has(sparseKey)) continue;
+    seenSparseLoose.add(sparseKey);
     merged.push(record);
   }
 
@@ -331,6 +396,10 @@ function main() {
   const birthdayData = syncSource(BIRTHDAY_SOURCE, mapBirthdayRecord, isDisplayableBirthday);
   writeJsonAtomically(BIRTHDAY_SOURCE.outputFile, BIRTHDAY_SOURCE.tmpFile, birthdayData);
   console.log(`✅ 生日会员缓存完成: ${birthdayData.total_records} 条 -> ${BIRTHDAY_SOURCE.outputFile}`);
+
+  const dutyData = syncSource(DUTY_SOURCE, mapDutyRecord, isDisplayableDuty);
+  writeJsonAtomically(DUTY_SOURCE.outputFile, DUTY_SOURCE.tmpFile, dutyData);
+  console.log(`✅ 值班表缓存完成: ${dutyData.total_records} 条 -> ${DUTY_SOURCE.outputFile}`);
 }
 
 main();

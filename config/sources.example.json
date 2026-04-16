@@ -18,6 +18,12 @@
       "baseToken": "replace-with-your-base-token",
       "tableId": "replace-with-your-table-id",
       "viewId": "replace-with-your-view-id"
+    },
+    "duty": {
+      "label": "单号查询/值班表",
+      "baseToken": "replace-with-your-base-token",
+      "tableId": "replace-with-your-table-id",
+      "viewId": "replace-with-your-view-id"
     }
   }
 }

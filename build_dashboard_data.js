@@ -7,10 +7,12 @@ const path = require('path');
 
 const ROOT = __dirname;
 const INPUT_FILE = path.join(ROOT, 'orders_realtime.json');
+const DUTY_INPUT_FILE = path.join(ROOT, 'duty_schedule.json');
 const OUTPUT_FILE = path.join(ROOT, 'dashboard_data.json');
 const TMP_FILE = path.join(ROOT, 'dashboard_data.tmp.json');
 const ACTIVE_EMPLOYEES = new Set(['谷佳', '雅琴', '黄蓉']);
 const WINDOW_DAYS = 14;
+const RETURN_RATE_WINDOW_DAYS = 21;
 const RETURN_RATE_LAG_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -48,7 +50,10 @@ function parseDate(value) {
 }
 
 function toDateKey(date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function eventDate(record) {
@@ -120,13 +125,41 @@ function buildReturnRateWindow(latestDate) {
 
   const lagEnd = new Date(latestDate.getTime() - RETURN_RATE_LAG_DAYS * DAY_MS);
   lagEnd.setHours(0, 0, 0, 0);
-  return { ...buildTrailingWindow(lagEnd, WINDOW_DAYS), mode: 'lagged_recent' };
+  return { ...buildTrailingWindow(lagEnd, RETURN_RATE_WINDOW_DAYS), mode: 'lagged_recent' };
 }
 
 function isInWindow(date, window) {
   if (!date || !window) return false;
   const t = date.getTime();
   return t >= window.start.getTime() && t <= window.end.getTime();
+}
+
+function getDutyDayMap(source, window) {
+  const rawRecords = Array.isArray(source?.records) ? source.records : [];
+  const dutyDays = new Map();
+
+  for (const record of rawRecords) {
+    const employee = text(record.employee);
+    const shift = text(record.shift);
+    if (!employee || !ACTIVE_EMPLOYEES.has(employee)) continue;
+    if (shift === '休假') continue;
+
+    const date = parseDate(record.duty_date);
+    if (!date) continue;
+
+    const effectiveDate = shift === '晚班'
+      ? new Date(date.getTime() + DAY_MS)
+      : date;
+    effectiveDate.setHours(0, 0, 0, 0);
+
+    if (!isInWindow(effectiveDate, window)) continue;
+
+    const dateKey = toDateKey(effectiveDate);
+    if (!dutyDays.has(employee)) dutyDays.set(employee, new Set());
+    dutyDays.get(employee).add(dateKey);
+  }
+
+  return dutyDays;
 }
 
 function ensureStat(map, key, seed) {
@@ -142,13 +175,18 @@ function main() {
   if (!fs.existsSync(INPUT_FILE)) {
     throw new Error(`Input file not found: ${INPUT_FILE}`);
   }
+  if (!fs.existsSync(DUTY_INPUT_FILE)) {
+    throw new Error(`Input file not found: ${DUTY_INPUT_FILE}`);
+  }
 
   const source = readJson(INPUT_FILE);
+  const dutySource = readJson(DUTY_INPUT_FILE);
   const rawRecords = Array.isArray(source.records) ? source.records : [];
   const records = rawRecords.filter(record => !isExcludedPlatform(record) && isActiveEmployee(record));
   const latestDate = getLatestDate(records, source.synced_at);
   const recentWindow = buildTrailingWindow(latestDate, WINDOW_DAYS);
   const returnRateWindow = buildReturnRateWindow(latestDate);
+  const dutyDayMap = getDutyDayMap(dutySource, recentWindow);
 
   const skuStats = new Map();
   const skuRateStats = new Map();
@@ -283,11 +321,15 @@ function main() {
     .map(item => {
       const rateStat = employeeRateStats.get(item.name) || { orders: 0, returns: 0 };
       const returnRate = rateStat.orders > 0 ? (rateStat.returns / rateStat.orders) * 100 : 0;
+      const dutyDays = dutyDayMap.get(item.name)?.size || 0;
+      const avgDailyOrders = dutyDays > 0 ? Number((item.orders / dutyDays).toFixed(1)) : null;
       return {
         name: item.name,
         orders: item.orders,
         revenue: Math.round(item.revenue),
         returns: item.returns,
+        duty_days: dutyDays,
+        avg_daily_orders: avgDailyOrders,
         return_rate: Number(returnRate.toFixed(1)),
       };
     })
