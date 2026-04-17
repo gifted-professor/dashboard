@@ -9,9 +9,11 @@ config/sources.local.json
 # Generated data
 orders_live.json
 orders_realtime.json
+orders_risk.json
 dashboard_data.json
 customer_action_data.json
 birthday_members.json
+meeting_summary.json
 duty_schedule.json
 full_orders.json
 danhaodata.json

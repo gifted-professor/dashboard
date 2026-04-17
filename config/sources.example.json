@@ -13,6 +13,12 @@
       "tableId": "replace-with-your-table-id",
       "viewId": "replace-with-your-view-id"
     },
+    "risk": {
+      "label": "单号查询/售后风险30天视图",
+      "baseToken": "replace-with-your-base-token",
+      "tableId": "replace-with-your-table-id",
+      "viewId": "replace-with-your-view-id"
+    },
     "birthday": {
       "label": "单号查询/会员生日",
       "baseToken": "replace-with-your-base-token",

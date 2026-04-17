@@ -3,6 +3,7 @@
  * 同步飞书数据到本地缓存
  * - orders_live.json: 汇总全量表（经营统计、客户聚合使用）
  * - orders_realtime.json: 实时视图 + 汇总表合并（订单页使用）
+ * - orders_risk.json: 风险雷达专用 30 天视图（售后风险使用）
  * - birthday_members.json: 会员生日表（客户池补充信息）
  * - duty_schedule.json: 客服值班表（团队日均单量使用）
  */
@@ -79,6 +80,7 @@ function loadSyncConfig() {
     profile: requireValue(profile, 'LARK_PROFILE or config.profile'),
     fullSource: buildSource(sources.full, '账单汇总_全部/汇总(全部)', 'orders_live.json'),
     realtimeSource: buildSource(sources.realtime, '单号查询/库存管理/实时视图', 'orders_realtime.json'),
+    riskSource: buildSource(sources.risk, '单号查询/售后风险30天视图', 'orders_risk.json'),
     birthdaySource: buildSource(sources.birthday, '单号查询/会员生日', 'birthday_members.json'),
     dutySource: buildSource(sources.duty, '单号查询/值班表', 'duty_schedule.json'),
   };
@@ -88,6 +90,7 @@ const {
   profile: PROFILE,
   fullSource: FULL_SOURCE,
   realtimeSource: REALTIME_SOURCE,
+  riskSource: RISK_SOURCE,
   birthdaySource: BIRTHDAY_SOURCE,
   dutySource: DUTY_SOURCE,
 } = loadSyncConfig();
@@ -341,34 +344,45 @@ function recordRichness(record) {
 
 function mergeRealtimeRecords(realtimeRecords, historicalRecords) {
   const merged = [];
-  const seenTracking = new Set();
-  const seenSparseTracked = new Set();
-  const seenSparseLoose = new Set();
+  const seenTracking = new Map();
+  const seenSparseTracked = new Map();
+  const seenSparseLoose = new Map();
   const candidates = [
-    ...realtimeRecords.map(record => ({ record, sourcePriority: 0 })),
-    ...historicalRecords.map(record => ({ record, sourcePriority: 1 })),
+    ...realtimeRecords.map(record => ({ record, sourcePriority: 0, inRealtimeView: true })),
+    ...historicalRecords.map(record => ({ record, sourcePriority: 1, inRealtimeView: false })),
   ].sort((a, b) => {
     const richnessDiff = recordRichness(b.record) - recordRichness(a.record);
     if (richnessDiff !== 0) return richnessDiff;
     return a.sourcePriority - b.sourcePriority;
   });
 
-  for (const { record } of candidates) {
+  for (const { record, inRealtimeView } of candidates) {
     const tracking = text(record.tracking_no);
     const key = dedupeKey(record);
     const sparseKey = sparseDedupeKey(record);
 
     if (tracking) {
-      if (seenTracking.has(tracking)) continue;
-      seenTracking.add(tracking);
-      seenSparseTracked.add(sparseKey);
-      merged.push(record);
+      const existing = seenTracking.get(tracking);
+      if (existing) {
+        if (inRealtimeView) existing.in_realtime_view = true;
+        continue;
+      }
+      const mergedRecord = { ...record, in_realtime_view: inRealtimeView };
+      seenTracking.set(tracking, mergedRecord);
+      seenSparseTracked.set(sparseKey, mergedRecord);
+      merged.push(mergedRecord);
       continue;
     }
 
-    if (seenSparseTracked.has(sparseKey) || seenSparseLoose.has(sparseKey)) continue;
-    seenSparseLoose.add(sparseKey);
-    merged.push(record);
+    const existing = seenSparseTracked.get(sparseKey) || seenSparseLoose.get(sparseKey);
+    if (existing) {
+      if (inRealtimeView) existing.in_realtime_view = true;
+      continue;
+    }
+
+    const mergedRecord = { ...record, in_realtime_view: inRealtimeView };
+    seenSparseLoose.set(sparseKey, mergedRecord);
+    merged.push(mergedRecord);
   }
 
   merged.sort((a, b) => String(recordDate(b)).localeCompare(String(recordDate(a))));
@@ -392,6 +406,10 @@ function main() {
   writeJsonAtomically(REALTIME_SOURCE.outputFile, REALTIME_SOURCE.tmpFile, mergedRealtime);
   console.log(`✅ 实时订单缓存完成: 实时 ${realtimeData.total_records} 条 + 历史 ${fullData.total_records} 条 -> 去重后 ${mergedRealtime.total_records} 条`);
   console.log(`   文件: ${REALTIME_SOURCE.outputFile}`);
+
+  const riskData = syncSource(RISK_SOURCE, mapOrderRecord, isDisplayableOrder);
+  writeJsonAtomically(RISK_SOURCE.outputFile, RISK_SOURCE.tmpFile, riskData);
+  console.log(`✅ 风险订单缓存完成: ${riskData.total_records} 条 -> ${RISK_SOURCE.outputFile}`);
 
   const birthdayData = syncSource(BIRTHDAY_SOURCE, mapBirthdayRecord, isDisplayableBirthday);
   writeJsonAtomically(BIRTHDAY_SOURCE.outputFile, BIRTHDAY_SOURCE.tmpFile, birthdayData);

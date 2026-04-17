@@ -12,6 +12,7 @@ const OUTPUT_FILE = path.join(ROOT, 'dashboard_data.json');
 const TMP_FILE = path.join(ROOT, 'dashboard_data.tmp.json');
 const ACTIVE_EMPLOYEES = new Set(['谷佳', '雅琴', '黄蓉']);
 const WINDOW_DAYS = 14;
+const RISK_WINDOW_DAYS = 30;
 const RETURN_RATE_WINDOW_DAYS = 21;
 const RETURN_RATE_LAG_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -70,18 +71,122 @@ function isActiveEmployee(record) {
   return !!employee && ACTIVE_EMPLOYEES.has(employee);
 }
 
+function isRealtimeScoped(record) {
+  return record.in_realtime_view !== false;
+}
+
 function isReturn(record) {
   const refundType = text(record.refund_type);
-  const returnStatus = text(record.return_status);
-  const refundReason = text(record.refund_reason);
-  const status = text(record.status);
-  const refundAmount = toNumber(record.refund_amount) || 0;
+  return !!(refundType && refundType !== '0' && refundType !== '正常' && refundType !== '取消');
+}
 
-  if (refundAmount > 0) return true;
-  if (refundType && refundType !== '0' && refundType !== '正常') return true;
+function hasWorkflowText(value) {
+  const raw = text(value);
+  return !!(raw && raw !== '/' && raw !== '-' && raw !== '—');
+}
 
-  const combined = [returnStatus, refundReason, status].filter(Boolean).join(' ');
-  return /(退|换|取消|拒收)/.test(combined) && !/正常/.test(combined);
+function parseWorkflowDate(value) {
+  if (!hasWorkflowText(value)) return null;
+  const date = parseDate(value);
+  if (!date) return null;
+  return date.getFullYear() < 2000 ? null : date;
+}
+
+function workflowDateText(value) {
+  return parseWorkflowDate(value) ? text(value) : null;
+}
+
+function isReturnWorkflowOrder(record) {
+  return isReturn(record);
+}
+
+function daysSince(date, latestDate) {
+  if (!date) return null;
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return Math.floor((latestDate.getTime() - normalized.getTime()) / DAY_MS);
+}
+
+function workflowAlertDate(record) {
+  return parseWorkflowDate(record.refund_date) || eventDate(record);
+}
+
+function buildWorkflowAlert(record, latestDate, ageDate, extra = {}) {
+  return {
+    record_id: record.record_id,
+    tracking_no: text(record.tracking_no),
+    customer_name: text(record.customer_name),
+    sku_name: text(record.sku_name),
+    employee: text(record.employee),
+    platform: text(record.platform),
+    factory: text(record.factory) || '未知',
+    refund_type: text(record.refund_type),
+    pay_date: text(record.pay_date),
+    return_tracking: hasWorkflowText(record.return_tracking) ? text(record.return_tracking) : null,
+    send_factory_date: workflowDateText(record.send_factory_date),
+    confirm_date: workflowDateText(record.confirm_date),
+    refund_amount: toNumber(record.refund_amount),
+    return_status: text(record.return_status),
+    age_days: daysSince(ageDate, latestDate),
+    ...extra,
+  };
+}
+
+function isMissingReturnTracking(record) {
+  return isReturnWorkflowOrder(record) && !hasWorkflowText(record.return_tracking);
+}
+
+function isPendingSendFactory(record, latestDate) {
+  if (!isReturnWorkflowOrder(record)) return false;
+  if (!hasWorkflowText(record.return_tracking)) return false;
+  if (hasWorkflowText(record.send_factory_date)) return false;
+  const ageDays = daysSince(workflowAlertDate(record), latestDate);
+  return ageDays != null && ageDays > 7;
+}
+
+function getFactoryFollowupMissingFields(record) {
+  const missing = [];
+  if (!parseWorkflowDate(record.confirm_date)) missing.push('厂家确认日期');
+  if (toNumber(record.refund_amount) == null) missing.push('厂家退回金额');
+  return missing;
+}
+
+function isFactoryFollowupIncomplete(record) {
+  return isReturnWorkflowOrder(record)
+    && hasWorkflowText(record.send_factory_date)
+    && getFactoryFollowupMissingFields(record).length > 0;
+}
+
+function summarizeWorkflowAlerts(key, title, severity, alerts) {
+  return {
+    key,
+    title,
+    severity,
+    count: alerts.length,
+    max_age_days: alerts[0]?.age_days ?? null,
+    example: alerts[0] || null,
+  };
+}
+
+function formatWorkflowDetail(alert) {
+  return {
+    record_id: alert.record_id,
+    customer_name: alert.customer_name,
+    sku_name: alert.sku_name,
+    employee: alert.employee,
+    platform: alert.platform,
+    factory: alert.factory,
+    refund_type: alert.refund_type,
+    pay_date: alert.pay_date,
+    tracking_no: alert.tracking_no,
+    return_tracking: alert.return_tracking,
+    send_factory_date: alert.send_factory_date,
+    confirm_date: alert.confirm_date,
+    refund_amount: alert.refund_amount,
+    return_status: alert.return_status,
+    age_days: alert.age_days,
+    missing_fields: alert.missing_fields || [],
+  };
 }
 
 function revenueValue(record) {
@@ -183,8 +288,10 @@ function main() {
   const dutySource = readJson(DUTY_INPUT_FILE);
   const rawRecords = Array.isArray(source.records) ? source.records : [];
   const records = rawRecords.filter(record => !isExcludedPlatform(record) && isActiveEmployee(record));
+  const realtimeRecords = records.filter(isRealtimeScoped);
   const latestDate = getLatestDate(records, source.synced_at);
   const recentWindow = buildTrailingWindow(latestDate, WINDOW_DAYS);
+  const riskWindow = buildTrailingWindow(latestDate, RISK_WINDOW_DAYS);
   const returnRateWindow = buildReturnRateWindow(latestDate);
   const dutyDayMap = getDutyDayMap(dutySource, recentWindow);
 
@@ -198,6 +305,9 @@ function main() {
   const monthlyStats = new Map();
   const inPeriodRecords = [];
   const laggedSummary = { orders: 0, returns: 0 };
+  const missingTrackingAlerts = [];
+  const pendingSendFactoryAlerts = [];
+  const factoryFollowupAlerts = [];
 
   for (let cursor = new Date(recentWindow.start); cursor <= recentWindow.end; cursor = new Date(cursor.getTime() + DAY_MS)) {
     dailyStats.set(toDateKey(cursor), { revenue: 0, orders: 0, returns: 0 });
@@ -216,11 +326,28 @@ function main() {
     const factory = text(record.factory) || '未知';
     const skuKey = `${skuName || '未知'}__${factory}`;
 
-    const monthStat = ensureStat(monthlyStats, monthKey(date), { orders: 0, revenue: 0, returns: 0, profit: 0 });
+    const remarkText = [text(record.remark), text(record.goods_remark)].filter(Boolean).join(' ');
+    const isPromoOrder = /优惠券|生日/.test(remarkText);
+
+    const monthStat = ensureStat(monthlyStats, monthKey(date), { orders: 0, revenue: 0, returns: 0, profit: 0, promo_orders: 0 });
     monthStat.orders += 1;
     monthStat.revenue += revenue;
     monthStat.profit += profit;
     if (returned) monthStat.returns += 1;
+    if (isPromoOrder) monthStat.promo_orders += 1;
+
+    if (isMissingReturnTracking(record)) {
+      missingTrackingAlerts.push(buildWorkflowAlert(record, latestDate, workflowAlertDate(record)));
+    } else if (isPendingSendFactory(record, latestDate)) {
+      pendingSendFactoryAlerts.push(buildWorkflowAlert(record, latestDate, workflowAlertDate(record)));
+    } else if (isFactoryFollowupIncomplete(record)) {
+      const missingFields = getFactoryFollowupMissingFields(record);
+      const sendFactoryDate = parseWorkflowDate(record.send_factory_date) || workflowAlertDate(record);
+      factoryFollowupAlerts.push(buildWorkflowAlert(record, latestDate, sendFactoryDate, {
+        missing_fields: missingFields,
+        missing_both: missingFields.length >= 2,
+      }));
+    }
 
     if (isInWindow(date, recentWindow)) {
       inPeriodRecords.push(record);
@@ -241,10 +368,26 @@ function main() {
       }
 
       if (employee) {
-        const current = ensureStat(employeeStats, employee, { name: employee, orders: 0, revenue: 0, returns: 0 });
+        const current = ensureStat(employeeStats, employee, {
+          name: employee,
+          orders: 0,
+          revenue: 0,
+          returns: 0,
+          profit_margin_sum: 0,
+          profit_margin_count: 0,
+          monthly_promo_orders: 0,
+        });
         current.orders += 1;
         current.revenue += revenue;
         if (returned) current.returns += 1;
+        if (monthKey(date) === monthKey(latestDate) && isPromoOrder) {
+          current.monthly_promo_orders += 1;
+        }
+        const rawProfitMargin = toNumber(record.profit_margin);
+        if (rawProfitMargin != null) {
+          current.profit_margin_sum += rawProfitMargin;
+          current.profit_margin_count += 1;
+        }
       }
 
       const factoryCurrent = ensureStat(factoryStats, factory, { name: factory, orders: 0, revenue: 0, profit: 0, returns: 0 });
@@ -330,6 +473,8 @@ function main() {
         returns: item.returns,
         duty_days: dutyDays,
         avg_daily_orders: avgDailyOrders,
+        sales_avg_profit_margin: item.profit_margin_count > 0 ? Number((item.profit_margin_sum / item.profit_margin_count * 100).toFixed(1)) : 0,
+        monthly_promo_orders: item.monthly_promo_orders || 0,
         return_rate: Number(returnRate.toFixed(1)),
       };
     })
@@ -363,17 +508,55 @@ function main() {
     ? Number(((laggedSummary.returns / laggedSummary.orders) * 100).toFixed(1))
     : 0;
 
-  const filteredRiskFactories = factories.filter(item => item.return_rate >= 10 && item.orders >= 3 && item.returns >= 1);
-  const filteredRiskEmployees = employees.filter(item => item.return_rate >= 10 && item.orders >= 5 && item.returns >= 1);
+  missingTrackingAlerts.sort((a, b) => (b.age_days || 0) - (a.age_days || 0));
+  pendingSendFactoryAlerts.sort((a, b) => (b.age_days || 0) - (a.age_days || 0));
+  factoryFollowupAlerts.sort((a, b) => {
+    if ((a.missing_both ? 1 : 0) !== (b.missing_both ? 1 : 0)) {
+      return (b.missing_both ? 1 : 0) - (a.missing_both ? 1 : 0);
+    }
+    return (b.age_days || 0) - (a.age_days || 0);
+  });
+
+  const topAlerts = [
+    summarizeWorkflowAlerts('missing_tracking', '退货未填单号', 'danger', missingTrackingAlerts),
+    summarizeWorkflowAlerts('pending_send_factory', '超7天未发厂家', 'warn', pendingSendFactoryAlerts),
+    summarizeWorkflowAlerts('factory_followup_incomplete', '已发厂待跟进', 'warn', factoryFollowupAlerts),
+  ].filter(item => item.count > 0);
+
+  const riskRecords = realtimeRecords.filter(record => {
+    const date = eventDate(record);
+    return isInWindow(date, riskWindow);
+  });
+  const riskReturnRecords = riskRecords.filter(isReturnWorkflowOrder);
+  const riskRecordIds = new Set(riskRecords.map(record => record.record_id));
+  const filteredMissingTrackingAlerts = missingTrackingAlerts.filter(item => riskRecordIds.has(item.record_id));
+  const filteredPendingSendFactoryAlerts = pendingSendFactoryAlerts.filter(item => riskRecordIds.has(item.record_id));
+  const filteredFactoryFollowupAlerts = factoryFollowupAlerts.filter(item => riskRecordIds.has(item.record_id));
+
+  const filteredTopAlerts = [
+    summarizeWorkflowAlerts('missing_tracking', '退货未填单号', 'danger', filteredMissingTrackingAlerts),
+    summarizeWorkflowAlerts('pending_send_factory', '超7天未发厂家', 'warn', filteredPendingSendFactoryAlerts),
+    summarizeWorkflowAlerts('factory_followup_incomplete', '已发厂待跟进', 'warn', filteredFactoryFollowupAlerts),
+  ].filter(item => item.count > 0);
 
   const riskSummary = {
-    high_return_sku_count: returnAlerts.length,
-    high_return_factory_count: filteredRiskFactories.length,
-    returning_orders_30d: summary.total_returns,
-    high_return_employee_count: filteredRiskEmployees.length,
-    top_risk_skus: returnAlerts.slice(0, 3),
-    top_risk_factories: filteredRiskFactories.slice(0, 3),
-    top_risk_employees: filteredRiskEmployees.slice(0, 3),
+    return_orders_total: riskReturnRecords.length,
+    missing_tracking_count: filteredMissingTrackingAlerts.length,
+    pending_send_factory_count: filteredPendingSendFactoryAlerts.length,
+    factory_followup_incomplete_count: filteredFactoryFollowupAlerts.length,
+    total_alert_count: filteredMissingTrackingAlerts.length + filteredPendingSendFactoryAlerts.length + filteredFactoryFollowupAlerts.length,
+    top_alerts: filteredTopAlerts,
+    detail_lists: {
+      return_orders: riskReturnRecords.map(record => formatWorkflowDetail(buildWorkflowAlert(record, latestDate, workflowAlertDate(record)))),
+      missing_tracking: filteredMissingTrackingAlerts.map(formatWorkflowDetail),
+      pending_send_factory: filteredPendingSendFactoryAlerts.map(formatWorkflowDetail),
+      factory_followup_incomplete: filteredFactoryFollowupAlerts.map(formatWorkflowDetail),
+    },
+    alert_groups: {
+      missing_tracking: filteredMissingTrackingAlerts.slice(0, 20),
+      pending_send_factory: filteredPendingSendFactoryAlerts.slice(0, 20),
+      factory_followup_incomplete: filteredFactoryFollowupAlerts.slice(0, 20),
+    },
   };
 
   const currentMonthKey = monthKey(latestDate);
@@ -407,6 +590,7 @@ function main() {
     revenue: Math.round(currentMonthBase.revenue),
     returns: currentMonthBase.returns,
     profit: Math.round(currentMonthBase.profit),
+    promo_orders: currentMonthBase.promo_orders || 0,
     return_rate: currentMonthRateOrders > 0 ? Number(((currentMonthRateReturns / currentMonthRateOrders) * 100).toFixed(1)) : 0,
     profit_margin: currentMonthBase.revenue > 0 ? Number(((currentMonthBase.profit / currentMonthBase.revenue) * 100).toFixed(1)) : 0,
   };
@@ -417,8 +601,22 @@ function main() {
     revenue: Math.round(previousMonthBase.revenue),
     returns: previousMonthBase.returns,
     profit: Math.round(previousMonthBase.profit),
+    promo_orders: previousMonthBase.promo_orders || 0,
     return_rate: previousMonthBase.orders > 0 ? Number(((previousMonthBase.returns / previousMonthBase.orders) * 100).toFixed(1)) : 0,
     profit_margin: previousMonthBase.revenue > 0 ? Number(((previousMonthBase.profit / previousMonthBase.revenue) * 100).toFixed(1)) : 0,
+  };
+
+  const teamSummary = {
+    profit_margin_all_orders: employees.reduce((sum, item) => sum + (item.revenue_all_orders || 0), 0) > 0
+      ? Number((employees.reduce((sum, item) => sum + (item.profit_all_orders || 0), 0) / employees.reduce((sum, item) => sum + (item.revenue_all_orders || 0), 0) * 100).toFixed(1))
+      : 0,
+    profit_margin_cost_present_only: employees.reduce((sum, item) => sum + (item.revenue_with_cost || 0), 0) > 0
+      ? Number((employees.reduce((sum, item) => sum + (item.profit_with_cost || 0), 0) / employees.reduce((sum, item) => sum + (item.revenue_with_cost || 0), 0) * 100).toFixed(1))
+      : 0,
+    orders_with_cost: employees.reduce((sum, item) => sum + (item.orders_with_cost || 0), 0),
+    total_orders: employees.reduce((sum, item) => sum + (item.orders || 0), 0),
+    current_month_promo_orders: currentMonthBase.promo_orders || 0,
+    previous_month_promo_orders: previousMonthBase.promo_orders || 0,
   };
 
   const result = {
@@ -436,6 +634,7 @@ function main() {
     return_alerts: returnAlerts,
     daily_trend: dailyTrend,
     employees,
+    team_summary: teamSummary,
     factories,
     risk_summary: riskSummary,
     overview_summary: {

@@ -304,6 +304,66 @@ body::after {
 .kpi-meta .down { color: var(--crimson); }
 .kpi-meta .warn { color: var(--amber); }
 
+.kpi.clickable {
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.kpi.clickable:hover {
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+
+.kpi.active {
+  background: var(--surface-elevated);
+}
+
+.kpi.active::before { opacity: 1; }
+
+.risk-detail-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.risk-detail-filter-btn.active {
+  background: var(--surface-elevated) !important;
+}
+
+.risk-detail-table-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.risk-detail-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.risk-detail-note {
+  font-size: 12px;
+  color: var(--text-mid);
+  margin-bottom: 14px;
+}
+
+.risk-detail-main {
+  font-weight: 600;
+}
+
+.risk-detail-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.risk-detail-mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
 /* Panels */
 .panel {
   background: var(--surface);
@@ -808,34 +868,64 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   <!-- ═══════════════ RISK ═══════════════ -->
   <section class="section" id="sec-risk">
     <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">14天退货单</div>
+      <div class="kpi clickable" id="riskKpiReturnOrders" onclick="setRiskMode('return_orders')">
+        <div class="kpi-label">退货订单数</div>
         <div class="kpi-value crimson" id="r_returns">--</div>
-        <div class="kpi-meta"><span class="down">当前风险主指标</span></div>
+        <div class="kpi-meta"><span class="down">当前售后主基数</span></div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高退货SKU</div>
+      <div class="kpi clickable" id="riskKpiMissingTracking" onclick="setRiskMode('missing_tracking')">
+        <div class="kpi-label">退货未填单号</div>
         <div class="kpi-value crimson" id="r_skus">--</div>
-        <div class="kpi-meta">近14天需重点复盘</div>
+        <div class="kpi-meta">需要先补退货物流</div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高退货厂家</div>
+      <div class="kpi clickable" id="riskKpiPendingSend" onclick="setRiskMode('pending_send_factory')">
+        <div class="kpi-label">超7天未发厂家</div>
         <div class="kpi-value amber" id="r_factories">--</div>
-        <div class="kpi-meta">退货率 ≥ 15%</div>
+        <div class="kpi-meta">退货已积压待发厂</div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高风险员工</div>
+      <div class="kpi clickable" id="riskKpiFactoryFollowup" onclick="setRiskMode('factory_followup_incomplete')">
+        <div class="kpi-label">已发厂待跟进</div>
         <div class="kpi-value amber" id="r_employees">--</div>
-        <div class="kpi-meta">退货率 ≥ 15%</div>
+        <div class="kpi-meta">需催厂家确认或退款</div>
       </div>
     </div>
 
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="dot crimson"></span>最危险的三件事</div>
-        <span class="panel-badge crimson">实时风险摘要</span>
+        <div class="panel-title"><span class="dot amber"></span>风险明细</div>
+        <span class="panel-badge amber" id="riskDetailBadge">退货订单数</span>
       </div>
-      <div class="panel-body" id="riskSummaryBody"></div>
+      <div class="panel-body">
+        <div class="risk-detail-tabs">
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterReturnOrders" onclick="setRiskMode('return_orders')">退货订单（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterMissingTracking" onclick="setRiskMode('missing_tracking')">未填单号（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterPendingSend" onclick="setRiskMode('pending_send_factory')">未发厂家（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterFactoryFollowup" onclick="setRiskMode('factory_followup_incomplete')">待跟进（--）</button>
+        </div>
+        <div class="risk-detail-note" id="riskDetailNote">点击上面的风险雷达或这里的按钮，可以切换下方列表；下滑会自动加载更多。</div>
+        <div class="risk-detail-meta" id="riskDetailMeta">显示 0 / 共 0 条</div>
+        <div class="table-wrap risk-detail-table-wrap" onscroll="handleRiskDetailScroll(event)">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" data-table="riskDetail" data-field="customer_name" onclick="sortDataTable('riskDetail','customer_name')">客户 / 货品 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="platform" onclick="sortDataTable('riskDetail','platform')">平台 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="pay_date" onclick="sortDataTable('riskDetail','pay_date')">付款时间 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="employee" onclick="sortDataTable('riskDetail','employee')">负责人 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="risk_stage" onclick="sortDataTable('riskDetail','risk_stage')">风险阶段 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="tracking_no" onclick="sortDataTable('riskDetail','tracking_no')">原订单单号 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="return_tracking" onclick="sortDataTable('riskDetail','return_tracking')">退货单号 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="send_factory_date" onclick="sortDataTable('riskDetail','send_factory_date')">发厂日期 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="confirm_date" onclick="sortDataTable('riskDetail','confirm_date')">厂家确认 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="refund_amount" onclick="sortDataTable('riskDetail','refund_amount')">厂家退款 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="age_days" onclick="sortDataTable('riskDetail','age_days')">已过天数 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="missing_fields_text" onclick="sortDataTable('riskDetail','missing_fields_text')">补充说明 <span class="arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="riskDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -930,19 +1020,19 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   <section class="section" id="sec-action">
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="dot gold"></span>本周建议动作</div>
-        <span class="panel-badge amber">来自实时客户数据</span>
+        <div class="panel-title"><span class="dot gold"></span>本周会议纪要</div>
+        <span class="panel-badge amber">meeting-minutes-ops</span>
       </div>
       <div class="panel-body" id="actionListBody"></div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="dot crimson"></span>风险客户样本</div></div>
+        <div class="panel-header"><div class="panel-title"><span class="dot crimson"></span>风险 / 待确认项</div></div>
         <div class="panel-body" id="riskAlertsBody"></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="dot jade"></span>加推客户样本</div></div>
+        <div class="panel-header"><div class="panel-title"><span class="dot jade"></span>下次会议重点考察项</div></div>
         <div class="panel-body" id="opportunityAlertsBody"></div>
       </div>
     </div>
@@ -963,6 +1053,10 @@ let customerFilterMode = 'all';
 let selectedCustomerKey = null;
 let customerHistoryVisibleCount = 20;
 let customerHistorySortState = { field: 'date', asc: false };
+let selectedRiskMode = 'return_orders';
+let riskDetailVisibleCount = 20;
+let riskDetailLoadingMore = false;
+let meetingSummaryData = null;
 
 async function loadOrders() {
   try {
@@ -1209,11 +1303,12 @@ const dataTableSortState = {
   returnAlerts: { field: null, asc: true },
   customerPriority: { field: 'priority_score', asc: false },
   customerHistory: { field: 'date', asc: false },
+  riskDetail: { field: 'pay_date', asc: false },
 };
 
 function defaultTableSortAsc(field) {
   if (field === 'days_since_last_order' || field === 'birthday_days_until') return true;
-  if (field === 'date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score') return false;
+  if (field === 'date' || field === 'pay_date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score' || field === 'age_days' || field === 'refund_amount') return false;
   return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
 }
 
@@ -1223,6 +1318,12 @@ function getDataTableValue(item, field) {
   }
   if (field === 'strike_window_status') {
     return { '可触达': 0, '已超窗': 1, '沉睡': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
+  }
+  if (field === 'risk_stage') {
+    return { '退货订单': 0, '退货未填单号': 1, '超7天未发厂家': 2, '已发厂待跟进': 3 }[item[field]] ?? 99;
+  }
+  if (field === 'missing_fields_text') {
+    return (item.missing_fields || []).join('、');
   }
   return item[field];
 }
@@ -1323,6 +1424,7 @@ function sortDataTable(tableName, field) {
   if (tableName === 'topSkus' || tableName === 'returnAlerts') renderDaily();
   if (tableName === 'customerPriority') renderCustomerSections();
   if (tableName === 'customerHistory') renderCustomerHistory();
+  if (tableName === 'riskDetail') renderRiskDetailPanel();
 }
 
 function sortCustomerHistory(field) {
@@ -1363,12 +1465,15 @@ async function loadData() {
 
     dashboardData = await dashboardResp.json();
     customerActionData = await customerResp.json();
+    await loadMeetingSummary();
 
     renderDaily();
     renderOverviewSection();
     renderRiskSection();
+    renderRiskDetailPanel();
     renderTeamSection();
     renderCustomerSections();
+    renderWeeklyMeetingSection();
     document.getElementById('dailyLoading').style.display = 'none';
     document.getElementById('dailyContent').style.display = 'block';
   } catch(e) {
@@ -1551,30 +1656,146 @@ function renderOverviewSection() {
   document.getElementById('o_month_badge').textContent = previous ? `${previous.month} vs ${current.month}` : (current.month || '最近月度');
 }
 
+function setRiskMode(mode) {
+  selectedRiskMode = mode;
+  riskDetailVisibleCount = 20;
+  renderRiskSection();
+  renderRiskDetailPanel();
+}
+
+function loadMoreRiskDetails() {
+  if (riskDetailLoadingMore) return;
+  riskDetailLoadingMore = true;
+  riskDetailVisibleCount += 20;
+  renderRiskDetailPanel();
+  requestAnimationFrame(() => {
+    riskDetailLoadingMore = false;
+  });
+}
+
+function handleRiskDetailScroll(event) {
+  const target = event?.target;
+  if (!target) return;
+  const remaining = target.scrollHeight - target.scrollTop - target.clientHeight;
+  if (remaining <= 120) loadMoreRiskDetails();
+}
+
+function getRiskModeMeta(risk) {
+  return {
+    return_orders: {
+      title: '退货订单数',
+      count: risk.return_orders_total || 0,
+      note: '当前列表展示这张实时视图里的全部退货订单，便于总览售后基数。',
+      severity: 'danger',
+      stage: '退货订单',
+    },
+    missing_tracking: {
+      title: '退货未填单号',
+      count: risk.missing_tracking_count || 0,
+      note: '这里会列出退款类型已存在，但退货单号还没补的单子。',
+      severity: 'danger',
+      stage: '退货未填单号',
+    },
+    pending_send_factory: {
+      title: '超7天未发厂家',
+      count: risk.pending_send_factory_count || 0,
+      note: '这里会列出退货单号已存在、但超过 7 天还没发厂的单子。',
+      severity: 'warn',
+      stage: '超7天未发厂家',
+    },
+    factory_followup_incomplete: {
+      title: '已发厂待跟进',
+      count: risk.factory_followup_incomplete_count || 0,
+      note: '这里会列出已经发厂，但厂家确认/退款字段还没补齐的单子。',
+      severity: 'warn',
+      stage: '已发厂待跟进',
+    },
+  };
+}
+
 function renderRiskSection() {
   if (!dashboardData || !dashboardData.risk_summary) return;
 
   const risk = dashboardData.risk_summary;
-  document.getElementById('r_returns').textContent = risk.returning_orders_30d || 0;
-  document.getElementById('r_skus').textContent = risk.high_return_sku_count || 0;
-  document.getElementById('r_factories').textContent = risk.high_return_factory_count || 0;
-  document.getElementById('r_employees').textContent = risk.high_return_employee_count || 0;
+  document.getElementById('r_returns').textContent = risk.return_orders_total || 0;
+  document.getElementById('r_skus').textContent = risk.missing_tracking_count || 0;
+  document.getElementById('r_factories').textContent = risk.pending_send_factory_count || 0;
+  document.getElementById('r_employees').textContent = risk.factory_followup_incomplete_count || 0;
 
-  const blocks = [];
-  if ((risk.top_risk_skus || []).length) {
-    const sku = risk.top_risk_skus[0];
-    blocks.push(`<div class="alert alert-danger"><div class="alert-title">SKU 风险：${sku.name}</div><div class="alert-body">14天退货 ${sku.returns_30d} 单 · 退货率 ${sku.return_rate}% · 厂家 ${sku.factory}</div></div>`);
-  }
-  if ((risk.top_risk_factories || []).length) {
-    const fac = risk.top_risk_factories[0];
-    blocks.push(`<div class="alert alert-danger"><div class="alert-title">厂家风险：${fac.name}</div><div class="alert-body">14天单量 ${fac.orders} · 退货 ${fac.returns} 单 · 退货率 ${fac.return_rate}%</div></div>`);
-  }
-  if ((risk.top_risk_employees || []).length) {
-    const emp = risk.top_risk_employees[0];
-    blocks.push(`<div class="alert alert-warn"><div class="alert-title">员工风险：${emp.name}</div><div class="alert-body">14天单量 ${emp.orders} · 退货 ${emp.returns} 单 · 退货率 ${emp.return_rate}%</div></div>`);
-  }
+  const kpiMap = {
+    return_orders: 'riskKpiReturnOrders',
+    missing_tracking: 'riskKpiMissingTracking',
+    pending_send_factory: 'riskKpiPendingSend',
+    factory_followup_incomplete: 'riskKpiFactoryFollowup',
+  };
+  Object.values(kpiMap).forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById(kpiMap[selectedRiskMode])?.classList.add('active');
 
-  document.getElementById('riskSummaryBody').innerHTML = blocks.join('') || '<div class="alert alert-jade"><div class="alert-title">当前无显著风险</div><div class="alert-body">风险指标暂时平稳。</div></div>';
+}
+
+function renderRiskDetailPanel() {
+  if (!dashboardData || !dashboardData.risk_summary) return;
+
+  const risk = dashboardData.risk_summary;
+  const detailLists = risk.detail_lists || {};
+  const modeMeta = getRiskModeMeta(risk);
+  const current = modeMeta[selectedRiskMode] || modeMeta.return_orders;
+  const list = (detailLists[selectedRiskMode] || []).map(item => ({
+    ...item,
+    risk_stage: current.stage,
+    missing_fields_text: (item.missing_fields || []).join('、'),
+  }));
+  const sorted = sortDataTableItems(list, 'riskDetail');
+  const visible = sorted.slice(0, riskDetailVisibleCount);
+
+  document.getElementById('riskDetailBadge').textContent = current.title;
+  document.getElementById('riskDetailNote').textContent = current.note + (list.length > visible.length ? ' 下滑会自动加载更多。' : '');
+  document.getElementById('riskDetailMeta').textContent = `显示 ${visible.length} / 共 ${list.length} 条`;
+  document.getElementById('riskFilterReturnOrders').textContent = `退货订单（${risk.return_orders_total || 0}）`;
+  document.getElementById('riskFilterMissingTracking').textContent = `未填单号（${risk.missing_tracking_count || 0}）`;
+  document.getElementById('riskFilterPendingSend').textContent = `未发厂家（${risk.pending_send_factory_count || 0}）`;
+  document.getElementById('riskFilterFactoryFollowup').textContent = `待跟进（${risk.factory_followup_incomplete_count || 0}）`;
+
+  ['riskFilterReturnOrders', 'riskFilterMissingTracking', 'riskFilterPendingSend', 'riskFilterFactoryFollowup'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active');
+  });
+  const activeButtonMap = {
+    return_orders: 'riskFilterReturnOrders',
+    missing_tracking: 'riskFilterMissingTracking',
+    pending_send_factory: 'riskFilterPendingSend',
+    factory_followup_incomplete: 'riskFilterFactoryFollowup',
+  };
+  document.getElementById(activeButtonMap[selectedRiskMode])?.classList.add('active');
+
+  const body = document.getElementById('riskDetailBody');
+  body.innerHTML = visible.map(item => {
+    const missingHtml = item.missing_fields && item.missing_fields.length
+      ? `<div class="risk-detail-sub">缺：${item.missing_fields.map(field => `<span class="tag tag-warn">${field}</span>`).join(' ')}</div>`
+      : '<div class="risk-detail-sub">字段已齐</div>';
+    const dateSummary = [item.send_factory_date ? `发厂 ${formatDateTime(item.send_factory_date)}` : null, item.confirm_date ? `确认 ${formatDateTime(item.confirm_date)}` : null].filter(Boolean).join(' · ');
+    return `<tr>
+      <td>
+        <div class="risk-detail-main">${item.customer_name || '-'} / ${item.sku_name || '-'}</div>
+        <div class="risk-detail-sub">厂家：${item.factory || '-'} · 退款类型：${item.refund_type || '-'}</div>
+      </td>
+      <td>${item.platform || '-'}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.pay_date)}</td>
+      <td>${item.employee || '-'}</td>
+      <td><span class="tag ${current.severity === 'danger' ? 'tag-danger' : 'tag-warn'}">${item.risk_stage || '-'}</span></td>
+      <td class="risk-detail-mono">${item.tracking_no || '-'}</td>
+      <td class="risk-detail-mono">${item.return_tracking || '-'}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.send_factory_date)}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.confirm_date)}</td>
+      <td class="risk-detail-mono">${item.refund_amount == null ? '-' : `¥${Number(item.refund_amount).toLocaleString()}`}</td>
+      <td class="risk-detail-mono">${item.age_days == null ? '-' : `${item.age_days}天`}</td>
+      <td>
+        <div>${item.missing_fields_text || (dateSummary || item.return_status || '当前无补充说明')}</div>
+        ${missingHtml}
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--text-dim)">当前分类下暂无风险明细。</td></tr>';
+
+  updateDataTableArrows('riskDetail');
 }
 
 function renderTeamSection() {
@@ -1611,6 +1832,14 @@ function renderTeamSection() {
         <div class="emp-stat">
           <div class="emp-stat-label">日均单量</div>
           <div class="emp-stat-value">${emp.avg_daily_orders == null ? '-' : emp.avg_daily_orders}</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">销售平均利润率</div>
+          <div class="emp-stat-value">${emp.sales_avg_profit_margin ?? 0}%</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">本月促单量</div>
+          <div class="emp-stat-value">${emp.monthly_promo_orders ?? 0}</div>
         </div>
       </div>
       <div class="emp-bar"><div class="emp-bar-fill ${barClass}" style="width:${barWidth}%"></div></div>
@@ -1687,6 +1916,45 @@ function renderCustomerHistory() {
   updateDataTableArrows('customerHistory');
 }
 
+async function loadMeetingSummary() {
+  try {
+    const resp = await fetch('meeting_summary.json');
+    if (!resp.ok) throw new Error('meeting_summary.json not found');
+    meetingSummaryData = await resp.json();
+  } catch (e) {
+    meetingSummaryData = null;
+  }
+}
+
+function renderWeeklyMeetingSection() {
+  const title = document.querySelector('#sec-action .panel-title');
+  const badge = document.querySelector('#sec-action .panel-badge');
+  const actionBody = document.getElementById('actionListBody');
+  const riskBody = document.getElementById('riskAlertsBody');
+  const checkBody = document.getElementById('opportunityAlertsBody');
+
+  if (!meetingSummaryData) {
+    title.innerHTML = '<span class="dot gold"></span>本周会议纪要';
+    badge.textContent = 'meeting_summary.json';
+    actionBody.innerHTML = '<div class="alert alert-warn"><div class="alert-title">本周会议纪要未准备</div><div class="alert-body">请更新 meeting_summary.json 后刷新页面。</div></div>';
+    riskBody.innerHTML = '<div class="alert alert-info"><div class="alert-title">暂无风险项</div><div class="alert-body">当前没有可展示的会议风险内容。</div></div>';
+    checkBody.innerHTML = '<div class="alert alert-info"><div class="alert-title">暂无考察项</div><div class="alert-body">当前没有可展示的下次会议考察项。</div></div>';
+    return;
+  }
+
+  const summary = meetingSummaryData;
+  title.innerHTML = '<span class="dot gold"></span>' + summary.meeting_title;
+  badge.textContent = summary.badge;
+
+  const summaryBlocks = (summary.summary || []).map((item, idx) => `<div class="action-item"><div class="action-num ${idx === 0 ? 'p1' : idx === 1 ? 'p2' : 'p3'}">${String(idx + 1).padStart(2, '0')}</div><div><div class="action-title">会议重点 ${idx + 1}</div><div class="action-desc">${item}</div></div></div>`).join('');
+  const nextWeekBlocks = (summary.next_week_actions || []).map((item, idx) => `<div class="action-item"><div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div><div><div class="action-title">下周动作</div><div class="action-desc">${item}</div></div></div>`).join('');
+  const employeeBlocks = (summary.employee_tasks || []).map(person => `<div class="emp-card"><div class="emp-card-header"><div class="emp-name">${person.owner}</div><span class="emp-load med">本周跟进</span></div><div style="font-size:13px;color:var(--text-mid);margin-bottom:12px">${person.goal}</div><div class="action-desc">${(person.tasks || []).map(task => `• ${task}`).join('<br>')}</div></div>`).join('');
+
+  actionBody.innerHTML = `${summaryBlocks}<div style="height:24px"></div><div class="panel" style="background:transparent;border:none;padding:0"><div class="panel-header" style="padding:0 0 16px 0"><div class="panel-title"><span class="dot jade"></span>下周重点动作</div></div><div class="panel-body" style="padding:0">${nextWeekBlocks}</div></div><div style="height:24px"></div><div class="panel" style="background:transparent;border:none;padding:0"><div class="panel-header" style="padding:0 0 16px 0"><div class="panel-title"><span class="dot steel"></span>个人任务</div></div><div class="panel-body" style="padding:0"><div class="emp-cards">${employeeBlocks}</div></div></div>`;
+  riskBody.innerHTML = (summary.risks || []).map(item => `<div class="alert alert-${item.level}" style="margin-bottom:12px"><div class="alert-title">${item.title}</div><div class="alert-body">${item.body}</div></div>`).join('') || '<div class="alert alert-info"><div class="alert-title">暂无风险项</div><div class="alert-body">当前没有可展示的会议风险内容。</div></div>';
+  checkBody.innerHTML = (summary.next_meeting_checks || []).map(item => `<div class="alert alert-info" style="margin-bottom:12px"><div class="alert-title">下次会议重点考察</div><div class="alert-body">${item}</div></div>`).join('') || '<div class="alert alert-info"><div class="alert-title">暂无考察项</div><div class="alert-body">当前没有可展示的下次会议考察项。</div></div>';
+}
+
 function renderCustomerSections() {
   if (!customerActionData) return;
 
@@ -1751,21 +2019,6 @@ function renderCustomerSections() {
   document.getElementById('customerFilterBirthday').textContent = `生日临近（${customerBuckets['BirthdayNear'].length}）`;
   document.getElementById('customerFilterP0P1').textContent = `P0/P1（${customerBuckets['P0P1'].length}）`;
   if (selectedCustomerKey) renderCustomerHistory();
-
-  const actions = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 4);
-  document.getElementById('actionListBody').innerHTML = actions.map((c, idx) => `<div class="action-item">
-    <div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div>
-    <div>
-      <div class="action-title">联系 ${c.customer_name || '客户'} · ${c.priority_tier}</div>
-      <div class="action-desc">负责人：${c.employee || '-'} · 节奏：${c.platform_cadence_bucket || '-'} · 斩杀线：${c.strike_window_status || '-'}${c.birthday_is_near ? ` · 生日 ${c.birthday_month_day || ''}` : ''} · 上次下单：${formatDateTime(c.last_order_date)} · 最近三单：${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join(' ｜ ') || '-'} · ${renderRecommendationBlock(c, { compact: true })} · ${c.action_reason || ''}</div>
-    </div>
-  </div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无可执行加推动作</div><div class="alert-body">当前客户分层没有 P0 / P1 名单。</div></div>';
-
-  const riskCustomers = customers.filter(c => c.priority_tier === 'Risk').slice(0, 3);
-  document.getElementById('riskAlertsBody').innerHTML = riskCustomers.map(c => `<div class="alert alert-danger" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · 风险观察</div><div class="alert-body">负责人：${c.employee || '-'} · 近90天退货 ${c.return_orders_90d || 0} 次 · 180天退货率 ${c.return_rate_180d || 0}%</div></div>`).join('') || '<div class="alert alert-jade"><div class="alert-title">暂无风险样本</div><div class="alert-body">当前没有风险观察客户。</div></div>';
-
-  const opportunities = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 3);
-  document.getElementById('opportunityAlertsBody').innerHTML = opportunities.map(c => `<div class="alert alert-jade" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · ${c.priority_tier}</div><div class="alert-body">平台：${c.platform || '-'} · ${renderRecommendationBlock(c, { compact: true })} · ${c.action_reason || ''}</div></div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无机会样本</div><div class="alert-body">当前没有高优先客户。</div></div>';
 }
 
 function loadStaticCharts(sec) {

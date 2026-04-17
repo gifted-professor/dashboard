@@ -2,9 +2,10 @@
 
 一个面向本地运营使用的业务工作台仓库。
 
-这个项目把三件事放在同一个目录里：
+这个项目把四件事放在同一个目录里：
 - **飞书数据同步**：从 Feishu Base 拉取订单与会员生日数据
 - **本地数据构建**：生成页面直接消费的统计 JSON
+- **会议纪要可视化**：用本地 `meeting_summary.json` 驱动本周行动板块
 - **静态工作台页面**：查看订单、经营概览、风险、团队表现、客户池与行动建议
 
 它的定位是：**可本地运行、可持续迭代、可放到 GitHub 管理版本，但不上传真实业务数据和本地私有配置。**
@@ -84,7 +85,7 @@ orders_realtime.json + birthday_members.json
      -> customer_action_data.json
 
 server.js
-  -> 提供 index.html 与本地 JSON 文件
+  -> 提供 index.html 与本地 JSON 文件（包含 meeting_summary.json）
 ```
 
 ## 输出文件说明
@@ -94,13 +95,14 @@ server.js
 - `birthday_members.json`：会员生日与偏好补充信息
 - `duty_schedule.json`：客服值班表缓存，用于核心团队的日均单量计算
 - `dashboard_data.json`：经营总览、风险、团队、月度对比所需数据
-- `customer_action_data.json`：客户分层、优先级、动作建议、推荐 SKU 数据
+- `customer_action_data.json`：客户分层、动态触达窗口、全历史客户价值、共购推荐、动作建议数据
+- `meeting_summary.json`：本周行动板块的会议纪要结构化数据；更新周会内容只需改这个文件并刷新页面
 
 ## 代码入口
 
 - `sync_danhao.js`：飞书字段映射、分页拉取、去重合并，是外部数据接入边界
 - `build_dashboard_data.js`：经营统计、退货率、风险汇总、团队表现，以及按值班天数计算日均单量
-- `build_customer_action_data.js`：客户分层、复购节奏、生日加权、促单推荐
+- `build_customer_action_data.js`：客户分层、个人历史节奏窗口、全历史客户价值、共购推荐、促单说明
 - `index.html`：整页前端 UI、样式、交互逻辑、表格排序筛选、图表渲染
 - `server.js`：本地静态服务与 gzip 输出
 
@@ -121,6 +123,12 @@ server.js
 - 经营、风险、团队、月度对比，依赖 `dashboard_data.json`
 - 客户池和行动建议，依赖 `customer_action_data.json`
 
+客户池当前的几个关键口径：
+- 负责人默认显示“最近一笔订单的负责人”
+- 客户金额、历史订单、复购节奏、共购推荐按手机号优先聚合全历史订单
+- 动态触达窗口优先根据客户自己的历史下单节奏生成；历史浅客户才用 fallback 窗口
+- 退货率使用“21 天成熟窗口 + 最近 7 天不计入”的滞后口径
+
 ## 常见失败原因
 
 - `npm run sync` 报缺少 `config/sources.local.json`：先复制 `config/sources.example.json`
@@ -128,6 +136,8 @@ server.js
 - `npm run build` 报找不到 `orders_realtime.json`：说明还没先执行 `npm run sync`
 - `npm run serve` 报 `EADDRINUSE`：默认端口 `8899` 已被占用，可在 `.env` 中修改 `PORT`
 - 页面打开后提示缺少 JSON：通常说明同步或构建还没完成，按 `sync -> build -> serve` 顺序重跑
+- 客户池金额明显偏低：检查是否是旧版 `customer_action_data.json`，重新运行 `npm run build:customer` 或 `npm run refresh`
+- 客户历史订单出现重复：说明旧版 `orders_realtime.json` 尚未更新，重新运行 `npm run sync`
 
 ## 隐私与提交约束
 

@@ -118,14 +118,7 @@ function revenueValue(record) {
 
 function isReturn(record) {
   const refundType = text(record.refund_type);
-  const returnStatus = text(record.return_status);
-  const refundReason = text(record.refund_reason);
-  const status = text(record.status);
-  const refundAmount = toNumber(record.refund_amount) || 0;
-  if (refundAmount > 0) return true;
-  if (refundType && refundType !== '0' && refundType !== '正常') return true;
-  const combined = [returnStatus, refundReason, status].filter(Boolean).join(' ');
-  return /(退|换|取消|拒收)/.test(combined) && !/正常/.test(combined);
+  return !!(refundType && refundType !== '0' && refundType !== '正常' && refundType !== '取消');
 }
 
 function customerKey(record) {
