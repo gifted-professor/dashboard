@@ -879,7 +879,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
         <div class="kpi-meta">需要先补退货物流</div>
       </div>
       <div class="kpi clickable" id="riskKpiPendingSend" onclick="setRiskMode('pending_send_factory')">
-        <div class="kpi-label">超7天未发厂家</div>
+        <div class="kpi-label">超7天未找厂家退款</div>
         <div class="kpi-value amber" id="r_factories">--</div>
         <div class="kpi-meta">退货已积压待发厂</div>
       </div>
@@ -899,7 +899,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
         <div class="risk-detail-tabs">
           <button class="search-btn risk-detail-filter-btn" id="riskFilterReturnOrders" onclick="setRiskMode('return_orders')">退货订单（--）</button>
           <button class="search-btn risk-detail-filter-btn" id="riskFilterMissingTracking" onclick="setRiskMode('missing_tracking')">未填单号（--）</button>
-          <button class="search-btn risk-detail-filter-btn" id="riskFilterPendingSend" onclick="setRiskMode('pending_send_factory')">未发厂家（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterPendingSend" onclick="setRiskMode('pending_send_factory')">未找厂家退款（--）</button>
           <button class="search-btn risk-detail-filter-btn" id="riskFilterFactoryFollowup" onclick="setRiskMode('factory_followup_incomplete')">待跟进（--）</button>
         </div>
         <div class="risk-detail-note" id="riskDetailNote">点击上面的风险雷达或这里的按钮，可以切换下方列表；下滑会自动加载更多。</div>
@@ -1320,7 +1320,7 @@ function getDataTableValue(item, field) {
     return { '可触达': 0, '已超窗': 1, '沉睡': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
   }
   if (field === 'risk_stage') {
-    return { '退货订单': 0, '退货未填单号': 1, '超7天未发厂家': 2, '已发厂待跟进': 3 }[item[field]] ?? 99;
+    return { '退货订单': 0, '退货未填单号': 1, '超7天未找厂家退款': 2, '已发厂待跟进': 3 }[item[field]] ?? 99;
   }
   if (field === 'missing_fields_text') {
     return (item.missing_fields || []).join('、');
@@ -1697,11 +1697,11 @@ function getRiskModeMeta(risk) {
       stage: '退货未填单号',
     },
     pending_send_factory: {
-      title: '超7天未发厂家',
+      title: '超7天未找厂家退款',
       count: risk.pending_send_factory_count || 0,
-      note: '这里会列出退货单号已存在、但超过 7 天还没发厂的单子。',
+      note: '这里会列出退货单号已存在、但超过 7 天还没找厂家退款的单子，已剔除新东莞、鞋子。',
       severity: 'warn',
-      stage: '超7天未发厂家',
+      stage: '超7天未找厂家退款',
     },
     factory_followup_incomplete: {
       title: '已发厂待跟进',
@@ -1753,7 +1753,7 @@ function renderRiskDetailPanel() {
   document.getElementById('riskDetailMeta').textContent = `显示 ${visible.length} / 共 ${list.length} 条`;
   document.getElementById('riskFilterReturnOrders').textContent = `退货订单（${risk.return_orders_total || 0}）`;
   document.getElementById('riskFilterMissingTracking').textContent = `未填单号（${risk.missing_tracking_count || 0}）`;
-  document.getElementById('riskFilterPendingSend').textContent = `未发厂家（${risk.pending_send_factory_count || 0}）`;
+  document.getElementById('riskFilterPendingSend').textContent = `未找厂家退款（${risk.pending_send_factory_count || 0}）`;
   document.getElementById('riskFilterFactoryFollowup').textContent = `待跟进（${risk.factory_followup_incomplete_count || 0}）`;
 
   ['riskFilterReturnOrders', 'riskFilterMissingTracking', 'riskFilterPendingSend', 'riskFilterFactoryFollowup'].forEach(id => {

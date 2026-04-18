@@ -11,6 +11,7 @@ const DUTY_INPUT_FILE = path.join(ROOT, 'duty_schedule.json');
 const OUTPUT_FILE = path.join(ROOT, 'dashboard_data.json');
 const TMP_FILE = path.join(ROOT, 'dashboard_data.tmp.json');
 const ACTIVE_EMPLOYEES = new Set(['谷佳', '雅琴', '黄蓉']);
+const EXCLUDED_PENDING_SEND_FACTORIES = new Set(['新东莞', '鞋子']);
 const WINDOW_DAYS = 14;
 const RISK_WINDOW_DAYS = 30;
 const RETURN_RATE_WINDOW_DAYS = 21;
@@ -138,6 +139,7 @@ function isMissingReturnTracking(record) {
 
 function isPendingSendFactory(record, latestDate) {
   if (!isReturnWorkflowOrder(record)) return false;
+  if (EXCLUDED_PENDING_SEND_FACTORIES.has(text(record.factory) || '')) return false;
   if (!hasWorkflowText(record.return_tracking)) return false;
   if (hasWorkflowText(record.send_factory_date)) return false;
   const ageDays = daysSince(workflowAlertDate(record), latestDate);
@@ -519,7 +521,7 @@ function main() {
 
   const topAlerts = [
     summarizeWorkflowAlerts('missing_tracking', '退货未填单号', 'danger', missingTrackingAlerts),
-    summarizeWorkflowAlerts('pending_send_factory', '超7天未发厂家', 'warn', pendingSendFactoryAlerts),
+    summarizeWorkflowAlerts('pending_send_factory', '超7天未找厂家退款', 'warn', pendingSendFactoryAlerts),
     summarizeWorkflowAlerts('factory_followup_incomplete', '已发厂待跟进', 'warn', factoryFollowupAlerts),
   ].filter(item => item.count > 0);
 
@@ -535,7 +537,7 @@ function main() {
 
   const filteredTopAlerts = [
     summarizeWorkflowAlerts('missing_tracking', '退货未填单号', 'danger', filteredMissingTrackingAlerts),
-    summarizeWorkflowAlerts('pending_send_factory', '超7天未发厂家', 'warn', filteredPendingSendFactoryAlerts),
+    summarizeWorkflowAlerts('pending_send_factory', '超7天未找厂家退款', 'warn', filteredPendingSendFactoryAlerts),
     summarizeWorkflowAlerts('factory_followup_incomplete', '已发厂待跟进', 'warn', filteredFactoryFollowupAlerts),
   ].filter(item => item.count > 0);
 
