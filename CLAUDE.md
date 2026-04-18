@@ -15,8 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build:customer` — rebuild `customer_action_data.json`
 - `npm run build` — run both build steps
 - `npm run refresh` — sync first, then rebuild both derived JSON files
-- `npm run serve` — start the local static server on `http://127.0.0.1:8899` by default
+- `npm run serve` — start the local dashboard server on `http://127.0.0.1:8899` by default (now also serves the local AI proxy endpoints under `/api/ai/*`)
 - Update weekly meeting content by editing `meeting_summary.json`, then refresh the page; no sync/build step is required for that panel.
+- The AI `生成得物` tool defaults to the local CLIProxyAPI setup on this machine: `http://127.0.0.1:8317` + `Bearer cliproxyapi-local` + model `gemini-3.1-flash-image`. `.env` only needs overrides when using a different proxy/model/base image path.
 
 ### Direct script entry points
 Use these when iterating on one stage of the pipeline:
@@ -58,12 +59,14 @@ orders_realtime.json + birthday_members.json
 
 server.js
   -> serves index.html + the generated JSON files
+  -> proxies local AI requests at `/api/ai/dewu/config` and `/api/ai/dewu/generate`
 
 index.html
   -> fetches orders_realtime.json for order search/history
   -> fetches dashboard_data.json for overview/risk/team metrics
   -> fetches customer_action_data.json for customer prioritization/actions
   -> fetches meeting_summary.json for the weekly meeting-summary action panel
+  -> calls the local AI endpoints for the `AI 工具 -> 生成得物` flow
 ```
 
 ### Sync layer: schema boundary and raw data normalization
@@ -109,4 +112,6 @@ index.html
   - `duty_schedule.json`
   - `*.tmp.json`
 - This repo has no meaningful `npm install` step; the main external prerequisite is an authenticated local `lark-cli` profile.
+- The AI `生成得物` flow also depends on a running local CLIProxyAPI instance plus `.env` values for `AI_PROXY_BASE_URL`, `AI_PROXY_API_KEY`, `AI_DEWU_MODEL`, and `AI_DEWU_BASE_IMAGE_PATH`.
+- For the AI flow, keep the browser talking only to dashboard-local `/api/ai/*` endpoints; do not expose the CLIProxyAPI Bearer key in frontend code.
 - If you change the local workflow or startup instructions, update `README.md` too. `PROJECT_HANDOVER.md` treats README maintenance as part of the expected upkeep.

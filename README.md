@@ -6,7 +6,8 @@
 - **飞书数据同步**：从 Feishu Base 拉取订单与会员生日数据
 - **本地数据构建**：生成页面直接消费的统计 JSON
 - **会议纪要可视化**：用本地 `meeting_summary.json` 驱动本周行动板块
-- **静态工作台页面**：查看订单、经营概览、风险、团队表现、客户池与行动建议
+- **本地 AI 工具**：通过本机 CLIProxyAPI 生成“得物报告图”
+- **静态工作台页面**：查看订单、经营概览、风险、团队表现、客户池、行动建议与 AI 工具
 
 它的定位是：**可本地运行、可持续迭代、可放到 GitHub 管理版本，但不上传真实业务数据和本地私有配置。**
 
@@ -26,6 +27,12 @@ cp config/sources.example.json config/sources.local.json
 - `LARK_CLI_BIN`：可选，自定义 `lark-cli` 路径
 - `SOURCES_CONFIG_PATH`：可选，自定义源配置路径
 - `LARK_SYNC_LIMIT`：可选，单次同步分页大小
+- `AI_PROXY_BASE_URL`：可选，本机 CLIProxyAPI 地址，默认 `http://127.0.0.1:8317`
+- `AI_PROXY_API_KEY`：可选，本机 CLIProxyAPI Bearer key，默认直接用 `cliproxyapi-local`
+- `AI_DEWU_MODEL`：可选，得物图生成模型名，默认 `gemini-3.1-flash-image`
+- `AI_DEWU_BASE_IMAGE_PATH`：可选，固定报表底图路径；默认先找 `./assets/dewu-base-report.jpg`，AI 板块会把它当作图 1
+- `AI_DEWU_TIMEOUT_MS`：可选，AI 请求超时时间
+- `AI_DEWU_MAX_FILE_BYTES`：可选，单张上传图片大小限制
 
 `config/sources.local.json`:
 - `full`：全量订单表
@@ -86,6 +93,7 @@ orders_realtime.json + birthday_members.json
 
 server.js
   -> 提供 index.html 与本地 JSON 文件（包含 meeting_summary.json）
+  -> 提供 `/api/ai/dewu/config` 与 `/api/ai/dewu/generate` 本地 AI 接口
 ```
 
 ## 输出文件说明
@@ -103,25 +111,27 @@ server.js
 - `sync_danhao.js`：飞书字段映射、分页拉取、去重合并，是外部数据接入边界
 - `build_dashboard_data.js`：经营统计、退货率、风险汇总、团队表现，以及按值班天数计算日均单量
 - `build_customer_action_data.js`：客户分层、个人历史节奏窗口、全历史客户价值、共购推荐、促单说明
-- `index.html`：整页前端 UI、样式、交互逻辑、表格排序筛选、图表渲染
-- `server.js`：本地静态服务与 gzip 输出
+- `index.html`：整页前端 UI、样式、交互逻辑、表格排序筛选、图表渲染，以及 AI 工具交互
+- `server.js`：本地静态服务、gzip 输出，以及本机 CLIProxyAPI 代理接口
 
 如果飞书字段名变化，优先改 `sync_danhao.js`；如果业务口径变化，优先改两个构建脚本；如果只是展示变化，再改 `index.html`。
 
 ## 页面结构
 
-页面目前分为六块：
+页面目前分为七块：
 - `单号查询`
 - `经营总览`
 - `风险雷达`
 - `核心团队`
 - `客户库`
 - `本周行动`
+- `AI 工具`
 
 其中：
 - 订单搜索与客户历史订单，直接依赖 `orders_realtime.json`
 - 经营、风险、团队、月度对比，依赖 `dashboard_data.json`
 - 客户池和行动建议，依赖 `customer_action_data.json`
+- `AI 工具 -> 生成得物` 通过 `server.js` 代理到本机 CLIProxyAPI；固定底图来自 `AI_DEWU_BASE_IMAGE_PATH`，客服只需上传 3 张商品图
 
 客户池当前的几个关键口径：
 - 负责人默认显示“最近一笔订单的负责人”
@@ -138,6 +148,9 @@ server.js
 - 页面打开后提示缺少 JSON：通常说明同步或构建还没完成，按 `sync -> build -> serve` 顺序重跑
 - 客户池金额明显偏低：检查是否是旧版 `customer_action_data.json`，重新运行 `npm run build:customer` 或 `npm run refresh`
 - 客户历史订单出现重复：说明旧版 `orders_realtime.json` 尚未更新，重新运行 `npm run sync`
+- AI 板块提示“AI 代理未配置”：检查 `.env` 中的 `AI_PROXY_BASE_URL`、`AI_PROXY_API_KEY`、`AI_DEWU_MODEL`
+- AI 板块提示“固定底图未配置”：检查 `AI_DEWU_BASE_IMAGE_PATH` 是否存在且为 jpg/png/webp
+- 点击生成后长时间无结果：先确认本机 CLIProxyAPI 正常，且 `/v1/models` 能看到 `gemini-3.1-flash-image`
 
 ## 隐私与提交约束
 
@@ -154,3 +167,23 @@ server.js
 - 任意带客户手机号、地址、订单明细、真实飞书标识的文件
 
 提交前建议确认 `.gitignore` 仍然有效，并检查仓库中没有残留真实业务数据。
+
+## AI 工具手动验证
+
+1. 在 `.env` 里配置：
+   - `AI_PROXY_BASE_URL=http://127.0.0.1:8317`
+   - `AI_PROXY_API_KEY=cliproxyapi-local`
+   - `AI_DEWU_MODEL=gemini-3.1-flash-image`
+   - `AI_DEWU_BASE_IMAGE_PATH=<你的固定底图路径>`
+2. 确认本机 CLIProxyAPI 已启动，并执行：
+   ```bash
+   curl -sS 'http://127.0.0.1:8317/v1/models' \
+     -H 'Authorization: Bearer cliproxyapi-local' | rg 'gemini-3.1-flash-image'
+   ```
+3. 启动 dashboard：
+   ```bash
+   npm run serve
+   ```
+4. 打开页面，确认导航里出现 `AI 工具`，且 `生成得物` 面板显示底图状态。
+5. 上传 3 张商品图，点击“开始生成”，确认页面最终出现结果图和下载按钮。
+6. 若故意停掉 CLIProxyAPI 或填错模型名，确认页面显示友好错误，而不会暴露本地 Bearer key。

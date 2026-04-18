@@ -175,6 +175,8 @@ body::after {
 }
 
 .search-btn:hover { opacity: 0.85; }
+.search-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.search-btn[disabled]:hover { opacity: 0.55; }
 
 .search-results {
   margin-top: 16px;
@@ -621,6 +623,100 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   line-height: 1.6;
 }
 
+/* AI tools */
+.ai-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.ai-upload-card {
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 320px;
+}
+
+.ai-upload-label {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ai-upload-preview {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ai-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ai-upload-empty {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.7;
+  padding: 24px 16px;
+}
+
+.ai-upload-meta {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.ai-upload-actions,
+.ai-section-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-section-actions {
+  margin-top: 20px;
+  align-items: center;
+}
+
+.ai-result-card {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 16px;
+}
+
+.ai-result-preview {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 12px;
+}
+
+.ai-result-preview img {
+  width: 100%;
+  max-height: 560px;
+  object-fit: contain;
+  display: block;
+}
+
+.ai-status-inline {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
 /* Footer */
 .footer {
   margin-top: 60px;
@@ -648,6 +744,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   .grid-2 { grid-template-columns: 1fr; }
   .emp-cards { grid-template-columns: 1fr; }
   .pool-row.r5 { grid-template-columns: repeat(3, 1fr); }
+  .ai-upload-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -693,6 +790,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
     <button class="section-btn" data-section="team">核心团队</button>
     <button class="section-btn" data-section="customer">客户库</button>
     <button class="section-btn" data-section="action">本周行动</button>
+    <button class="section-btn" data-section="ai">AI 工具</button>
   </nav>
 
   <!-- ═══════════════ ORDERS (单号查询) ═══════════════ -->
@@ -1038,6 +1136,22 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
     </div>
   </section>
 
+  <!-- ═══════════════ AI ═══════════════ -->
+  <section class="section" id="sec-ai">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot jade"></span>AI 工具</div>
+        <span class="panel-badge jade">CLIProxyAPI</span>
+      </div>
+      <div class="panel-body">
+        <div class="risk-detail-tabs">
+          <button class="search-btn risk-detail-filter-btn active" id="aiToolDewu" onclick="setAiTool('dewu')">生成得物</button>
+        </div>
+        <div id="aiToolBody"></div>
+      </div>
+    </div>
+  </section>
+
   <footer class="footer" id="footer">GENERATED · 加载中...</footer>
 
 </div>
@@ -1057,6 +1171,13 @@ let selectedRiskMode = 'return_orders';
 let riskDetailVisibleCount = 20;
 let riskDetailLoadingMore = false;
 let meetingSummaryData = null;
+let aiConfig = null;
+let aiConfigLoading = true;
+let selectedAiTool = 'dewu';
+let dewuUploads = Array.from({ length: 3 }, () => null);
+let dewuSubmitting = false;
+let dewuResult = null;
+let dewuError = '';
 
 async function loadOrders() {
   try {
@@ -1474,6 +1595,7 @@ async function loadData() {
     renderTeamSection();
     renderCustomerSections();
     renderWeeklyMeetingSection();
+    renderAiSection();
     document.getElementById('dailyLoading').style.display = 'none';
     document.getElementById('dailyContent').style.display = 'block';
   } catch(e) {
@@ -1620,6 +1742,8 @@ document.querySelectorAll('.section-btn').forEach(btn => {
 document.getElementById('todayDate').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'});
 loadOrders();
 loadData();
+loadAiConfig();
+renderAiSection();
 
 // Load static charts when sections are activated
 let staticChartsLoaded = {};
@@ -1923,6 +2047,209 @@ async function loadMeetingSummary() {
     meetingSummaryData = await resp.json();
   } catch (e) {
     meetingSummaryData = null;
+  }
+}
+
+async function loadAiConfig() {
+  aiConfigLoading = true;
+  dewuError = '';
+  try {
+    const resp = await fetch('/api/ai/dewu/config', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('AI config request failed');
+    const payload = await resp.json();
+    aiConfig = payload;
+  } catch (e) {
+    aiConfig = null;
+    dewuError = 'AI 配置读取失败。请先重启当前 dashboard 服务；新版本会默认直连本机 CLIProxyAPI。';
+  } finally {
+    aiConfigLoading = false;
+    renderAiSection();
+  }
+}
+
+function setAiTool(tool) {
+  selectedAiTool = tool;
+  document.getElementById('aiToolDewu')?.classList.toggle('active', tool === 'dewu');
+  renderAiSection();
+}
+
+function getReadableFileSize(bytes) {
+  if (!bytes) return '-';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderDewuUploadCard(upload, index) {
+  const preview = upload
+    ? `<img src="${upload.dataUrl}" alt="商品图 ${index + 1}">`
+    : `<div class="ai-upload-empty">上传商品图 ${index + 1}<br>支持 jpg / png / webp</div>`;
+  const meta = upload
+    ? `<div class="ai-upload-meta">${escapeHtml(upload.name)}<br>${getReadableFileSize(upload.size)}</div>`
+    : '<div class="ai-upload-meta">用于替换中间报告里的对应缩略图位。</div>';
+  const removeButton = upload
+    ? `<button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="clearDewuUpload(${index})">清除</button>`
+    : '';
+  return `<div class="ai-upload-card">
+    <div class="ai-upload-label">商品图 ${index + 1}</div>
+    <div class="ai-upload-preview">${preview}</div>
+    ${meta}
+    <div class="ai-upload-actions">
+      <label class="search-btn" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)">
+        ${upload ? '重新上传' : '选择图片'}
+        <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handleDewuUpload(event, ${index})">
+      </label>
+      ${removeButton}
+    </div>
+  </div>`;
+}
+
+function renderAiSection() {
+  const body = document.getElementById('aiToolBody');
+  if (!body || selectedAiTool !== 'dewu') return;
+
+  const proxyEnabled = !!aiConfig?.enabled;
+  const configReady = !!(aiConfig && aiConfig.ok !== false && proxyEnabled);
+  const uploadedCount = dewuUploads.filter(Boolean).length;
+  const hasBaseImage = !!aiConfig?.baseImageReady;
+  const acceptedMimeText = (aiConfig?.acceptedMimeTypes || ['image/jpeg', 'image/png', 'image/webp'])
+    .map(type => type.replace('image/', '').toUpperCase())
+    .join(' / ');
+  const limitText = getReadableFileSize(aiConfig?.maxFileBytes || 0);
+  const disabledReason = aiConfigLoading
+    ? '正在读取本地 AI 配置…'
+    : !aiConfig
+      ? 'AI 配置读取失败'
+      : !proxyEnabled
+        ? 'AI 代理未配置'
+        : !hasBaseImage
+          ? '固定底图未配置'
+          : uploadedCount < 3
+            ? `还需上传 ${3 - uploadedCount} 张商品图`
+            : '';
+  const shouldDisableGenerate = dewuSubmitting || !!disabledReason;
+
+  const alerts = [
+    `<div class="alert ${hasBaseImage ? 'alert-jade' : 'alert-warn'}"><div class="alert-title">固定底图</div><div class="alert-body">${hasBaseImage ? '已配置固定得物报告底图，客服只需上传 3 张商品图。' : '固定底图未就绪。默认会先找 ./assets/dewu-base-report.jpg；如果你放在别处，再用 .env 的 AI_DEWU_BASE_IMAGE_PATH 覆盖。'}</div></div>`,
+    `<div class="alert ${proxyEnabled ? 'alert-info' : 'alert-warn'}"><div class="alert-title">本地链路</div><div class="alert-body">${proxyEnabled ? `当前通过 dashboard 服务端转发到本机 CLIProxyAPI，再请求 ${escapeHtml(aiConfig?.model || 'gemini-3.1-flash-image')}。默认直接走 http://127.0.0.1:8317 + Bearer cliproxyapi-local，浏览器不会直接暴露 key。` : 'AI 代理尚未启用。现在代码默认会直接走 http://127.0.0.1:8317 + Bearer cliproxyapi-local；如果页面还在提示未启用，请重启当前 dashboard 服务。'}</div></div>`,
+  ];
+  if (dewuError) {
+    alerts.push(`<div class="alert alert-danger"><div class="alert-title">生成失败</div><div class="alert-body">${escapeHtml(dewuError)}</div></div>`);
+  }
+
+  const resultBlock = dewuResult
+    ? `<div class="ai-result-card"><div class="alert alert-jade" style="margin-bottom:0"><div class="alert-title">生成完成</div><div class="alert-body">模型 ${escapeHtml(dewuResult.model || '-') } · ${escapeHtml(formatDateTime(dewuResult.generatedAt || ''))}</div></div><div class="ai-result-preview"><img src="${dewuResult.imageDataUrl}" alt="生成得物结果"></div><div class="ai-section-actions"><a class="search-btn" style="background:var(--gold);color:#fff;text-decoration:none" href="${dewuResult.imageDataUrl}" download="dewu-generated-${Date.now()}.png">下载图片</a></div></div>`
+    : '';
+
+  body.innerHTML = `
+    ${alerts.join('')}
+    <div class="panel" style="background:transparent;border:none;box-shadow:none;margin-bottom:0">
+      <div class="panel-header" style="padding:0 0 16px 0">
+        <div class="panel-title"><span class="dot gold"></span>生成得物</div>
+        <span class="panel-badge amber">固定底图 + 3 张商品图</span>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="ai-status-inline">支持格式：${acceptedMimeText} · 单张建议不超过 ${limitText}</div>
+        <div class="ai-upload-grid">
+          ${dewuUploads.map((upload, index) => renderDewuUploadCard(upload, index)).join('')}
+        </div>
+        <div class="ai-section-actions">
+          <button class="search-btn" style="background:var(--gold);color:#fff" onclick="submitDewuGeneration()" ${shouldDisableGenerate ? 'disabled' : ''}>${dewuSubmitting ? '生成中…' : '开始生成'}</button>
+          <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="resetDewuForm()" ${dewuSubmitting ? 'disabled' : ''}>重置</button>
+          <span class="ai-status-inline">${escapeHtml(disabledReason || '已就绪，可直接生成。')}</span>
+        </div>
+        ${resultBlock}
+      </div>
+    </div>`;
+}
+
+function handleDewuUpload(event, index) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const maxBytes = aiConfig?.maxFileBytes || 0;
+  if (maxBytes && file.size > maxBytes) {
+    dewuError = `商品图 ${index + 1} 超过 ${getReadableFileSize(maxBytes)}，请压缩后重试。`;
+    renderAiSection();
+    event.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    dewuUploads[index] = {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: String(reader.result || ''),
+    };
+    dewuError = '';
+    dewuResult = null;
+    renderAiSection();
+  };
+  reader.onerror = () => {
+    dewuError = `商品图 ${index + 1} 读取失败，请重新选择。`;
+    renderAiSection();
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function clearDewuUpload(index) {
+  dewuUploads[index] = null;
+  dewuError = '';
+  dewuResult = null;
+  renderAiSection();
+}
+
+function resetDewuForm() {
+  dewuUploads = Array.from({ length: 3 }, () => null);
+  dewuSubmitting = false;
+  dewuResult = null;
+  dewuError = '';
+  renderAiSection();
+}
+
+async function submitDewuGeneration() {
+  if (dewuSubmitting) return;
+  if (!aiConfig?.baseImageReady) {
+    dewuError = '固定底图未配置，请先检查本地 .env。';
+    renderAiSection();
+    return;
+  }
+  if (dewuUploads.some(upload => !upload)) {
+    dewuError = '请先上传 3 张商品图。';
+    renderAiSection();
+    return;
+  }
+
+  dewuSubmitting = true;
+  dewuError = '';
+  dewuResult = null;
+  renderAiSection();
+
+  try {
+    const resp = await fetch('/api/ai/dewu/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images: dewuUploads.map(upload => upload.dataUrl) }),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok || !payload.ok || !payload.imageDataUrl) {
+      throw new Error(payload.error || '生成失败，请稍后重试。');
+    }
+    dewuResult = payload;
+  } catch (e) {
+    dewuError = e instanceof Error ? e.message : '生成失败，请稍后重试。';
+  } finally {
+    dewuSubmitting = false;
+    renderAiSection();
   }
 }
 
