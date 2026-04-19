@@ -12,10 +12,13 @@ const OUTPUT_FILE = path.join(ROOT, 'customer_action_data.json');
 const TMP_FILE = path.join(ROOT, 'customer_action_data.tmp.json');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ACTION_WINDOW_DAYS = 14;
+const RECOMMENDATION_SKU_WINDOW_DAYS = 60;
 const RETURN_RATE_WINDOW_DAYS = 21;
 const RETURN_RATE_LAG_DAYS = 7;
 const HISTORY_DAYS = 180;
 const BIRTHDAY_NEAR_DAYS = 7;
+const MIN_CONTACT_WINDOW_DAYS = 7;
+const VERY_RECENT_ORDER_DAYS = 7;
 const ACTIVE_EMPLOYEES = new Set(['谷佳', '雅琴', '黄蓉']);
 
 function readJson(filePath) {
@@ -223,14 +226,14 @@ function dynamicTimingWindow(uniqueOrderDays, repeatIntervals, daysSinceLastOrde
   let cadenceSource;
 
   if (uniqueOrderDays >= 3 && intervalMedian != null) {
-    expectedGapDays = Math.max(3, Math.round(intervalMedian * trendRatio));
-    windowStart = Math.max(3, Math.round(expectedGapDays * 0.8));
+    expectedGapDays = Math.max(MIN_CONTACT_WINDOW_DAYS, Math.round(intervalMedian * trendRatio));
+    windowStart = Math.max(MIN_CONTACT_WINDOW_DAYS, Math.round(expectedGapDays * 0.8));
     windowEnd = Math.max(windowStart + 1, Math.round(expectedGapDays * 1.25));
     dormantAfter = Math.max(45, Math.round(Math.max(intervalP75 || 0, expectedGapDays * 2)));
     cadenceSource = 'history_rich';
   } else if (uniqueOrderDays === 2 && intervalMedian != null) {
-    expectedGapDays = Math.max(3, Math.round(intervalMedian));
-    windowStart = Math.max(3, Math.round(expectedGapDays * 0.85));
+    expectedGapDays = Math.max(MIN_CONTACT_WINDOW_DAYS, Math.round(intervalMedian));
+    windowStart = Math.max(MIN_CONTACT_WINDOW_DAYS, Math.round(expectedGapDays * 0.85));
     windowEnd = Math.max(windowStart + 1, Math.round(expectedGapDays * 1.35));
     dormantAfter = Math.max(45, Math.round(expectedGapDays * 2));
     cadenceSource = 'history_light';
@@ -429,6 +432,7 @@ function main() {
   const now = new Date();
   const latestDate = getLatestDate(records, source.synced_at);
   const recentWindow = buildTrailingWindow(latestDate, ACTION_WINDOW_DAYS);
+  const recommendationSkuWindow = buildTrailingWindow(latestDate, RECOMMENDATION_SKU_WINDOW_DAYS);
   const laggedReturnWindow = buildLaggedWindow(latestDate);
   const birthdaySource = loadBirthdayMap(latestDate);
   const customers = new Map();
@@ -446,7 +450,7 @@ function main() {
     const skuKey = `${skuName || '未知'}__${factory}`;
     const key = customerKey(record);
 
-    if (skuName && isInWindow(date, recentWindow)) {
+    if (skuName && isInWindow(date, recommendationSkuWindow)) {
       const sku = skuRecentStats.get(skuKey) || { key: skuKey, name: skuName, factory, platform: text(record.platform), orders: 0, revenue: 0 };
       sku.orders += 1;
       sku.revenue += revenue;
@@ -551,7 +555,7 @@ function main() {
         returnRate: rateStat.orders > 0 ? rateStat.returns / rateStat.orders : 0,
       };
     })
-    .filter(item => item.orders >= 2 && item.returnRate <= 0.15 && item.revenue > 0)
+    .filter(item => item.orders >= 1 && item.returnRate <= 0.2 && item.revenue > 0)
     .sort((a, b) => b.revenue - a.revenue || b.orders - a.orders);
   const qualifiedSkuMap = new Map(qualifiedSkus.map(item => [item.key, item]));
 
@@ -584,11 +588,14 @@ function main() {
       const birthdayCategories = new Set(birthdayStyleTags.map(tag => detectCategory(tag)).filter(Boolean));
       const birthdayNear = !!birthday?.birthday_is_near;
 
+      const isVeryRecentOrder = daysSinceLastOrder != null && daysSinceLastOrder < VERY_RECENT_ORDER_DAYS;
+
       let score = 0;
       if (timing.window_state === 'ready') score += 30;
       else if (timing.window_state === 'late') score += 18;
       else if (timing.window_state === 'cooldown') score -= 25;
       else if (timing.window_state === 'dormant') score += 6;
+      if (isVeryRecentOrder) score -= 25;
 
       if (profile.orders_14d >= 3) score += 18;
       else if (profile.orders_14d >= 2) score += 12;
@@ -636,13 +643,14 @@ function main() {
         : returnRate180 > 0.2 ? -10
         : 0;
       const birthdayBonusScore = birthdayNear && timing.window_state !== 'cooldown' ? 10 : 0;
+      const recentOrderPenaltyScore = isVeryRecentOrder ? -25 : 0;
 
       let priorityTier = 'P2';
       let actionType = 'recall';
-      if (!hasReturnsPressure && timing.window_state === 'ready' && (score >= 55 || isHighValue)) {
+      if (!isVeryRecentOrder && !hasReturnsPressure && timing.window_state === 'ready' && (score >= 55 || isHighValue)) {
         priorityTier = 'P0';
         actionType = 'must_follow_today';
-      } else if (!hasReturnsPressure && timing.window_state === 'ready' && score >= 38) {
+      } else if (!isVeryRecentOrder && !hasReturnsPressure && timing.window_state === 'ready' && score >= 38) {
         priorityTier = 'P1';
         actionType = 'upsell';
       } else if (hasReturnsPressure) {
@@ -673,6 +681,7 @@ function main() {
         return_orders_14d: returnOrders14dScore,
         return_rate_180d: returnRate180dScore,
         birthday_bonus: birthdayBonusScore,
+        recent_order_penalty: recentOrderPenaltyScore,
         priority_tier: priorityTier,
         action_type: actionType,
       };
@@ -734,10 +743,11 @@ function main() {
       }
 
       const recommendationCandidates = Array.from(candidateMap.values())
+        .filter(candidate => candidate.pair_count >= 2 || candidate.source_hit_count >= 2 || candidate.same_day_count >= 1)
         .map(candidate => {
           const topSources = candidate.support_sources
             .sort((a, b) => b.pairCount - a.pairCount || b.sourceTotal - a.sourceTotal)
-            .slice(0, 2);
+            .slice(0, 3);
           candidate.source_skus = topSources.map(item => item.sourceLabel);
           candidate.best_pair_count = topSources[0]?.pairCount || 0;
           candidate.best_source_total = topSources[0]?.sourceTotal || 0;
@@ -770,7 +780,7 @@ function main() {
           return result;
         })
         .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
+        .slice(0, 5);
 
       const primaryRecommendation = recommendationCandidates[0] || null;
       const secondaryRecommendations = recommendationCandidates.slice(1);

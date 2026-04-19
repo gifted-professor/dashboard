@@ -1463,13 +1463,17 @@ function renderRecommendationBlock(customer, options = {}) {
   const compact = !!options.compact;
   const primary = customer.primary_recommendation || null;
   const backups = customer.secondary_recommendations || [];
+  const visibleBackups = backups.slice(0, compact ? 1 : 2);
+  const hiddenBackupCount = Math.max(backups.length - visibleBackups.length, 0);
 
   if (!primary) {
-    const fallback = (customer.recommended_skus || []).slice(0, compact ? 2 : 1).join(' / ');
-    return fallback || '暂无';
+    const fallbackItems = (customer.recommended_skus || []).slice(0, compact ? 2 : 3);
+    if (!fallbackItems.length) return '暂无';
+    const hiddenFallbackCount = Math.max((customer.recommended_skus || []).length - fallbackItems.length, 0);
+    return `<div style="font-weight:600">可试探：${fallbackItems.join(' / ')}</div>${hiddenFallbackCount ? `<div style="margin-top:4px;font-size:11px;color:var(--text-mid)">另有 ${hiddenFallbackCount} 款可推</div>` : ''}`;
   }
 
-  const backupText = backups.map(item => item.label || `${item.sku || '-'} · ${item.factory || '-'}`).join(' / ');
+  const backupText = visibleBackups.map(item => item.label || `${item.sku || '-'} · ${item.factory || '-'}`).join(' / ');
   const tagHtml = renderRecommendationTags(primary.reason_tags);
   if (compact) {
     return `主推：${primary.label || primary.sku || '-'}${backupText ? ` · 共购备选：${backupText}` : ''}${primary.reason ? ` · 原因：${primary.reason}` : ''}`;
@@ -1478,7 +1482,7 @@ function renderRecommendationBlock(customer, options = {}) {
   return `<div style="font-weight:600">${primary.label || primary.sku || '-'}</div>
     <div style="margin-top:4px">${tagHtml || '<span class="tag tag-steel">推荐</span>'}</div>
     <div style="margin-top:4px;font-size:11px;color:var(--text-dim)">${customer.recommendation_summary || primary.reason || '-'}</div>
-    <div style="margin-top:4px;font-size:11px;color:var(--text-mid)">备选：${backupText || '暂无'}</div>`;
+    <div style="margin-top:4px;font-size:11px;color:var(--text-mid)">备选：${backupText || '暂无'}${hiddenBackupCount ? ` · 另有 ${hiddenBackupCount} 款可推` : ''}</div>`;
 }
 
 function sortDataTableItems(items, tableName) {
