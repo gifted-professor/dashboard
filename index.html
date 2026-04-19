@@ -1080,7 +1080,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
         <div class="table-wrap" style="max-height:420px;overflow-y:auto">
           <table>
             <thead>
-              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">触达时机 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_365d" onclick="sortDataTable('customerPriority','revenue_365d')">365天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_all" onclick="sortDataTable('customerPriority','revenue_all')">累计总金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th>最近三单</th><th>共购推荐</th></tr>
+              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">触达时机 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_365d" onclick="sortDataTable('customerPriority','revenue_365d')">365天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_all" onclick="sortDataTable('customerPriority','revenue_all')">累计总金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="display_last_selling_platform" onclick="sortDataTable('customerPriority','display_last_selling_platform')">出售平台 <span class="arrow"></span></th><th>最近三单</th><th>共购推荐</th></tr>
             </thead>
             <tbody id="customerPriorityBody"></tbody>
           </table>
@@ -1430,7 +1430,7 @@ const dataTableSortState = {
 function defaultTableSortAsc(field) {
   if (field === 'days_since_last_order' || field === 'birthday_days_until') return true;
   if (field === 'date' || field === 'pay_date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score' || field === 'age_days' || field === 'refund_amount') return false;
-  return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
+  return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'display_last_selling_platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
 }
 
 function getDataTableValue(item, field) {
@@ -2328,6 +2328,7 @@ function renderCustomerSections() {
     <td style="font-family:var(--mono)">¥${(c.revenue_365d || 0).toLocaleString()}</td>
     <td style="font-family:var(--mono)">¥${(c.revenue_all || 0).toLocaleString()}</td>
     <td style="font-family:var(--mono)">${c.last_order_date || '-'} / ${c.days_since_last_order ?? '-'}天</td>
+    <td>${c.display_last_selling_platform || '-'}</td>
     <td>${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join('<br>') || '-'}</td>
     <td>${renderRecommendationBlock(c)}</td>
   </tr>`).join('');

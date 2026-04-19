@@ -683,8 +683,12 @@ function main() {
         .slice(0, 3)
         .map(([key]) => key.replace(/__/, ' · '));
 
-      const recentOrders = profile.recent_orders
-        .sort((a, b) => b.date.getTime() - a.date.getTime())
+      const sortedRecentOrders = [...profile.recent_orders]
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
+      const displayLastSellingPlatform = sortedRecentOrders.find(item => item.platform && item.platform !== '相册')?.platform
+        || sortedRecentOrders[0]?.platform
+        || null;
+      const recentOrders = sortedRecentOrders
         .slice(0, 3)
         .map(item => ({
           date: item.date_key,
@@ -804,6 +808,7 @@ function main() {
         platform: profile.platform,
         last_order_date: lastDate ? toDateKey(lastDate) : null,
         last_order_platform: profile.last_order_platform,
+        display_last_selling_platform: displayLastSellingPlatform,
         last_order_sku: profile.last_order_sku,
         last_order_tracking_no: profile.last_order_tracking_no,
         recent_orders: recentOrders,
