@@ -175,6 +175,8 @@ body::after {
 }
 
 .search-btn:hover { opacity: 0.85; }
+.search-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.search-btn[disabled]:hover { opacity: 0.55; }
 
 .search-results {
   margin-top: 16px;
@@ -303,6 +305,66 @@ body::after {
 .kpi-meta .up { color: var(--jade); }
 .kpi-meta .down { color: var(--crimson); }
 .kpi-meta .warn { color: var(--amber); }
+
+.kpi.clickable {
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.kpi.clickable:hover {
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+
+.kpi.active {
+  background: var(--surface-elevated);
+}
+
+.kpi.active::before { opacity: 1; }
+
+.risk-detail-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.risk-detail-filter-btn.active {
+  background: var(--surface-elevated) !important;
+}
+
+.risk-detail-table-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.risk-detail-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.risk-detail-note {
+  font-size: 12px;
+  color: var(--text-mid);
+  margin-bottom: 14px;
+}
+
+.risk-detail-main {
+  font-weight: 600;
+}
+
+.risk-detail-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.risk-detail-mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
 
 /* Panels */
 .panel {
@@ -561,6 +623,271 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   line-height: 1.6;
 }
 
+/* AI tools */
+.ai-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.ai-upload-card {
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 320px;
+}
+
+.ai-upload-label {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ai-upload-preview {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ai-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ai-upload-empty {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.7;
+  padding: 24px 16px;
+}
+
+.ai-upload-meta {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.ai-upload-actions,
+.ai-section-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-section-actions {
+  margin-top: 20px;
+  align-items: center;
+}
+
+.ai-result-card {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 16px;
+}
+
+.ai-result-preview {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 12px;
+}
+
+.ai-result-preview img {
+  width: 100%;
+  max-height: 560px;
+  object-fit: contain;
+  display: block;
+}
+
+.ai-status-inline {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.ai-prompt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.ai-prompt-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+.ai-prompt-label {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.ai-prompt-textarea {
+  width: 100%;
+  min-height: 156px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 14px 16px;
+  outline: none;
+}
+
+.ai-prompt-textarea:focus {
+  border-color: var(--gold);
+}
+
+.ai-shortcut-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ai-upload-card.compact {
+  min-height: 272px;
+}
+
+.ai-material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.ai-material-card {
+  background: rgba(255, 248, 237, 0.72);
+  border: 1px solid rgba(215, 194, 162, 0.78);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 112px;
+}
+
+.ai-material-thumb {
+  width: 76px;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-material-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ai-material-body {
+  min-width: 0;
+}
+
+.ai-material-title {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.ai-material-desc {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ai-material-tags {
+  margin-top: 6px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ai-material-tags .tag {
+  font-size: 9px;
+  padding: 1px 6px;
+}
+
+.ai-material-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ai-material-actions .search-btn {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.ai-reference-empty {
+  margin-top: 20px;
+  border: 1px dashed var(--border);
+  background: var(--bg);
+  padding: 18px;
+  color: var(--text-mid);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ai-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ai-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-form-field.full {
+  grid-column: 1 / -1;
+}
+
+.ai-form-label {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.ai-form-select,
+.ai-form-input {
+  width: 100%;
+}
+
+.ai-form-textarea {
+  min-height: 96px;
+}
+
 /* Footer */
 .footer {
   margin-top: 60px;
@@ -588,6 +915,8 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   .grid-2 { grid-template-columns: 1fr; }
   .emp-cards { grid-template-columns: 1fr; }
   .pool-row.r5 { grid-template-columns: repeat(3, 1fr); }
+  .ai-upload-grid { grid-template-columns: 1fr; }
+  .ai-form-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -633,6 +962,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
     <button class="section-btn" data-section="team">核心团队</button>
     <button class="section-btn" data-section="customer">客户库</button>
     <button class="section-btn" data-section="action">本周行动</button>
+    <button class="section-btn" data-section="ai">AI 工具</button>
   </nav>
 
   <!-- ═══════════════ ORDERS (单号查询) ═══════════════ -->
@@ -665,15 +995,14 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
           <thead style="position:sticky;top:0;z-index:10">
             <tr>
               <th class="sortable" data-table="orders" data-field="customer_name" onclick="sortOrders('customer_name')">客户名 <span class="arrow"></span></th>
-              <th>货品名</th>
-              <th class="sortable" data-table="orders" data-field="employee" onclick="sortOrders('employee')">员工 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="factory" onclick="sortOrders('factory')">厂家 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="tracking_no" onclick="sortOrders('tracking_no')">单号 <span class="arrow"></span></th>
-              <th>平台</th>
-              <th class="sortable" data-table="orders" data-field="revenue" onclick="sortOrders('revenue')">收款 <span class="arrow"></span></th>
-              <th class="sortable" data-table="orders" data-field="cost" onclick="sortOrders('cost')">成本 <span class="arrow"></span></th>
-              <th>状态</th>
+              <th class="sortable" data-table="orders" data-field="phone" onclick="sortOrders('phone')">手机号 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="platform" onclick="sortOrders('platform')">平台 <span class="arrow"></span></th>
               <th class="sortable" data-table="orders" data-field="pay_date" onclick="sortOrders('pay_date')">付款日期 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="factory" onclick="sortOrders('factory')">厂家 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="sku_name" onclick="sortOrders('sku_name')">货品名 <span class="arrow"></span></th>
+              <th class="sortable" data-table="orders" data-field="revenue" onclick="sortOrders('revenue')">收款金额 <span class="arrow"></span></th>
+              <th>状态</th>
+              <th class="sortable" data-table="orders" data-field="return_tracking" onclick="sortOrders('return_tracking')">退货单号 <span class="arrow"></span></th>
             </tr>
           </thead>
           <tbody id="orderBody"></tbody>
@@ -809,34 +1138,64 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   <!-- ═══════════════ RISK ═══════════════ -->
   <section class="section" id="sec-risk">
     <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-label">14天退货单</div>
+      <div class="kpi clickable" id="riskKpiReturnOrders" onclick="setRiskMode('return_orders')">
+        <div class="kpi-label">退货订单数</div>
         <div class="kpi-value crimson" id="r_returns">--</div>
-        <div class="kpi-meta"><span class="down">当前风险主指标</span></div>
+        <div class="kpi-meta"><span class="down">当前售后主基数</span></div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高退货SKU</div>
+      <div class="kpi clickable" id="riskKpiMissingTracking" onclick="setRiskMode('missing_tracking')">
+        <div class="kpi-label">退货未填单号</div>
         <div class="kpi-value crimson" id="r_skus">--</div>
-        <div class="kpi-meta">近14天需重点复盘</div>
+        <div class="kpi-meta">需要先补退货物流</div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高退货厂家</div>
+      <div class="kpi clickable" id="riskKpiPendingSend" onclick="setRiskMode('pending_send_factory')">
+        <div class="kpi-label">超7天未找厂家退款</div>
         <div class="kpi-value amber" id="r_factories">--</div>
-        <div class="kpi-meta">退货率 ≥ 15%</div>
+        <div class="kpi-meta">退货已积压待发厂</div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">高风险员工</div>
+      <div class="kpi clickable" id="riskKpiFactoryFollowup" onclick="setRiskMode('factory_followup_incomplete')">
+        <div class="kpi-label">已发厂待跟进</div>
         <div class="kpi-value amber" id="r_employees">--</div>
-        <div class="kpi-meta">退货率 ≥ 15%</div>
+        <div class="kpi-meta">需催厂家确认或退款</div>
       </div>
     </div>
 
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="dot crimson"></span>最危险的三件事</div>
-        <span class="panel-badge crimson">实时风险摘要</span>
+        <div class="panel-title"><span class="dot amber"></span>风险明细</div>
+        <span class="panel-badge amber" id="riskDetailBadge">退货订单数</span>
       </div>
-      <div class="panel-body" id="riskSummaryBody"></div>
+      <div class="panel-body">
+        <div class="risk-detail-tabs">
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterReturnOrders" onclick="setRiskMode('return_orders')">退货订单（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterMissingTracking" onclick="setRiskMode('missing_tracking')">未填单号（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterPendingSend" onclick="setRiskMode('pending_send_factory')">未找厂家退款（--）</button>
+          <button class="search-btn risk-detail-filter-btn" id="riskFilterFactoryFollowup" onclick="setRiskMode('factory_followup_incomplete')">待跟进（--）</button>
+        </div>
+        <div class="risk-detail-note" id="riskDetailNote">点击上面的风险雷达或这里的按钮，可以切换下方列表；下滑会自动加载更多。</div>
+        <div class="risk-detail-meta" id="riskDetailMeta">显示 0 / 共 0 条</div>
+        <div class="table-wrap risk-detail-table-wrap" onscroll="handleRiskDetailScroll(event)">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" data-table="riskDetail" data-field="customer_name" onclick="sortDataTable('riskDetail','customer_name')">客户 / 货品 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="platform" onclick="sortDataTable('riskDetail','platform')">平台 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="pay_date" onclick="sortDataTable('riskDetail','pay_date')">付款时间 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="employee" onclick="sortDataTable('riskDetail','employee')">负责人 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="risk_stage" onclick="sortDataTable('riskDetail','risk_stage')">风险阶段 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="tracking_no" onclick="sortDataTable('riskDetail','tracking_no')">原订单单号 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="return_tracking" onclick="sortDataTable('riskDetail','return_tracking')">退货单号 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="send_factory_date" onclick="sortDataTable('riskDetail','send_factory_date')">发厂日期 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="confirm_date" onclick="sortDataTable('riskDetail','confirm_date')">厂家确认 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="refund_amount" onclick="sortDataTable('riskDetail','refund_amount')">厂家退款 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="age_days" onclick="sortDataTable('riskDetail','age_days')">已过天数 <span class="arrow"></span></th>
+                <th class="sortable" data-table="riskDetail" data-field="missing_fields_text" onclick="sortDataTable('riskDetail','missing_fields_text')">补充说明 <span class="arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="riskDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -872,28 +1231,22 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
 
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="dot gold"></span>客户分层结构</div>
-      </div>
-      <div class="panel-body"><div class="chart-wrap"><canvas id="customerPieChart"></canvas></div></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
         <div class="panel-title"><span class="dot jade"></span>可触达客户池</div>
       </div>
       <div class="panel-body">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
           <button class="search-btn" id="customerFilterAll" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('all')">全部（--）</button>
-          <button class="search-btn" id="customerFilterReady" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('进入斩杀线')">进入斩杀线（--）</button>
-          <button class="search-btn" id="customerFilterRecall" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('召回期')">召回期（--）</button>
+          <button class="search-btn" id="customerFilterReady" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('可触达')">可触达（--）</button>
+          <button class="search-btn" id="customerFilterRecall" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('已超窗')">已超窗（--）</button>
           <button class="search-btn" id="customerFilterRisk" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('Risk')">风险观察（--）</button>
           <button class="search-btn" id="customerFilterBirthday" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('BirthdayNear')">生日临近（--）</button>
           <button class="search-btn" id="customerFilterP0P1" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('P0P1')">P0/P1（--）</button>
+          <button class="search-btn" id="customerFilterWechatAsset" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="setCustomerFilter('WechatAsset')">微信资产（--）</button>
         </div>
         <div class="table-wrap" style="max-height:420px;overflow-y:auto">
           <table>
             <thead>
-              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score" onclick="sortDataTable('customerPriority','priority_score')">优先分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">斩杀线 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_180d" onclick="sortDataTable('customerPriority','revenue_180d')">180天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th>最近三单</th><th>推荐SKU</th></tr>
+              <tr><th class="sortable" data-table="customerPriority" data-field="customer_name" onclick="sortDataTable('customerPriority','customer_name')">客户 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="employee" onclick="sortDataTable('customerPriority','employee')">负责人 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="priority_score_with_wechat" onclick="sortDataTable('customerPriority','priority_score_with_wechat')">试算分 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="wechat_asset_boost" onclick="sortDataTable('customerPriority','wechat_asset_boost')">微信加分 <span class="arrow"></span></th><th>微信资产</th><th class="sortable" data-table="customerPriority" data-field="priority_tier" onclick="sortDataTable('customerPriority','priority_tier')">层级 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="strike_window_status" onclick="sortDataTable('customerPriority','strike_window_status')">触达时机 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="birthday_days_until" onclick="sortDataTable('customerPriority','birthday_days_until')">生日 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_365d" onclick="sortDataTable('customerPriority','revenue_365d')">365天金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="revenue_all" onclick="sortDataTable('customerPriority','revenue_all')">累计总金额 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="days_since_last_order" onclick="sortDataTable('customerPriority','days_since_last_order')">上次下单 <span class="arrow"></span></th><th class="sortable" data-table="customerPriority" data-field="display_last_selling_platform" onclick="sortDataTable('customerPriority','display_last_selling_platform')">出售平台 <span class="arrow"></span></th><th>最近三单</th><th>共购推荐</th></tr>
             </thead>
             <tbody id="customerPriorityBody"></tbody>
           </table>
@@ -911,6 +1264,7 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
       </div>
       <div class="panel-body">
         <div id="customerHistorySummary" style="font-size:13px;color:var(--text-mid);margin-bottom:16px"></div>
+        <div id="customerHistoryReason" class="alert alert-info" style="margin-bottom:16px;display:none"></div>
         <div class="table-wrap" style="max-height:360px;overflow-y:auto">
           <table>
             <thead>
@@ -930,20 +1284,33 @@ th.sortable.active .arrow { opacity: 1; color: var(--gold); }
   <section class="section" id="sec-action">
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="dot gold"></span>本周建议动作</div>
-        <span class="panel-badge amber">来自实时客户数据</span>
+        <div class="panel-title"><span class="dot gold"></span>本周会议纪要</div>
+        <span class="panel-badge amber">meeting-minutes-ops</span>
       </div>
       <div class="panel-body" id="actionListBody"></div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="dot crimson"></span>风险客户样本</div></div>
+        <div class="panel-header"><div class="panel-title"><span class="dot crimson"></span>风险 / 待确认项</div></div>
         <div class="panel-body" id="riskAlertsBody"></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="dot jade"></span>加推客户样本</div></div>
+        <div class="panel-header"><div class="panel-title"><span class="dot jade"></span>下次会议重点考察项</div></div>
         <div class="panel-body" id="opportunityAlertsBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ AI ═══════════════ -->
+  <section class="section" id="sec-ai">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot jade"></span>AI 工具</div>
+        <span class="panel-badge jade">CLIProxyAPI</span>
+      </div>
+      <div class="panel-body">
+        <div id="aiToolBody"></div>
       </div>
     </div>
   </section>
@@ -963,6 +1330,87 @@ let customerFilterMode = 'all';
 let selectedCustomerKey = null;
 let customerHistoryVisibleCount = 20;
 let customerHistorySortState = { field: 'date', asc: false };
+let selectedRiskMode = 'return_orders';
+let riskDetailVisibleCount = 20;
+let riskDetailLoadingMore = false;
+let meetingSummaryData = null;
+let aiConfig = null;
+let aiConfigLoading = true;
+let aiAssets = null;
+let aiAssetsLoading = true;
+let aiAssetsError = '';
+let dewuUploads = Array.from({ length: 3 }, () => null);
+let dewuSubmitting = false;
+let dewuResult = null;
+let dewuError = '';
+let freeImagePrompt = '';
+let freeImageUploads = [];
+let freeImageSubmitting = false;
+let freeImageResult = null;
+let freeImageError = '';
+let freeImageMaterialImporting = false;
+let selectedFreeTemplateId = null;
+let aiActionNotice = null;
+let aiTemplateDeleting = false;
+let aiGeneratedMaterialSaving = false;
+let aiGeneratedMaterialDraft = null;
+const AI_MATERIAL_TYPE_OPTIONS = ['参考图', '底图', '背景', 'Logo', '构图样例', '品牌物料', '其他'];
+const AI_DRAFT_STORAGE_KEYS = {
+  freePrompt: 'dashboard.ai.freePrompt',
+  freeTemplateId: 'dashboard.ai.freeTemplateId',
+};
+const FALLBACK_FREE_IMAGE_TEMPLATES = [
+  {
+    record_id: 'fallback-free-image-1',
+    name: '商品白底图',
+    shortcut_name: '商品白底图',
+    tools: ['自由生图'],
+    default_material_ids: [],
+    tags: [],
+    sort: 10,
+    prompt: '请生成一张干净的电商商品白底图，主体居中，边缘清晰，保留真实材质、颜色和细节，不要额外文字、logo 水印或多余道具。',
+  },
+  {
+    record_id: 'fallback-free-image-2',
+    name: '高级海报',
+    shortcut_name: '高级海报',
+    tools: ['自由生图'],
+    default_material_ids: [],
+    tags: [],
+    sort: 20,
+    prompt: '请生成一张高级感品牌海报，主体突出，背景简洁有层次，光线干净克制，整体适合做社媒封面或广告 KV，不要加多余文字。',
+  },
+  {
+    record_id: 'fallback-free-image-3',
+    name: '种草封面',
+    shortcut_name: '种草封面',
+    tools: ['自由生图'],
+    default_material_ids: [],
+    tags: [],
+    sort: 30,
+    prompt: '请生成一张适合小红书 / 社媒种草的封面图，主体清晰，画面自然高级，有生活方式感，避免过度磨皮和夸张特效。',
+  },
+  {
+    record_id: 'fallback-free-image-4',
+    name: '门店陈列',
+    shortcut_name: '门店陈列',
+    tools: ['自由生图'],
+    default_material_ids: [],
+    tags: [],
+    sort: 40,
+    prompt: '请生成一张真实商业拍摄感的门店陈列图，主体清晰，空间有纵深，陈列干净整齐，整体像品牌线下门店视觉。',
+  },
+  {
+    record_id: 'fallback-free-image-5',
+    name: '详情页首图',
+    shortcut_name: '详情页首图',
+    tools: ['自由生图'],
+    default_material_ids: [],
+    tags: [],
+    sort: 50,
+    prompt: '请生成一张适合电商详情页首屏的商品氛围图，主体占比明确，材质和结构清晰，画面简洁但有质感，不要添加文字。',
+  },
+];
 
 async function loadOrders() {
   try {
@@ -1004,15 +1452,14 @@ function renderOrders() {
     const statusClass = isReturn ? 'tag-danger' : (r.is_paid === '已打款' ? 'tag-ok' : 'tag-warn');
     return `<tr>
       <td style="font-weight:500">${r.customer_name || '-'}</td>
-      <td>${r.sku_name || '-'}</td>
-      <td>${r.employee || '-'}</td>
-      <td style="color:var(--text-mid)">${r.factory || '-'}</td>
-      <td style="font-family:var(--mono);font-size:12px">${r.tracking_no || '-'}</td>
+      <td style="font-family:var(--mono)">${r.phone || '-'}</td>
       <td>${r.platform || '-'}</td>
-      <td style="font-family:var(--mono)">¥${r.revenue || '0'}</td>
-      <td style="font-family:var(--mono)">¥${r.cost || '0'}</td>
-      <td><span class="tag ${statusClass}">${isReturn ? refundType : (r.status || '-')}</span></td>
       <td style="font-family:var(--mono);font-size:12px">${formatDateTime(r.pay_date || r.order_date || r.ship_date)}</td>
+      <td style="color:var(--text-mid)">${r.factory || '-'}</td>
+      <td>${r.sku_name || '-'}</td>
+      <td style="font-family:var(--mono)">¥${r.revenue || '0'}</td>
+      <td><span class="tag ${statusClass}">${isReturn ? refundType : (r.status || '-')}</span></td>
+      <td style="font-family:var(--mono);font-size:12px">${r.return_tracking || '-'}</td>
     </tr>`;
   }).join('');
 }
@@ -1022,27 +1469,46 @@ function liveSearch() {
   window._orderSearchTimer = setTimeout(filterOrders, 300);
 }
 
+function getOrderSearchScore(record, query) {
+  if (!query) return 0;
+  const tracking = String(record.tracking_no || '').toLowerCase();
+  const customer = String(record.customer_name || '').toLowerCase();
+  const customerInfo = String(record.customer_info || '').toLowerCase();
+  const sku = String(record.sku_name || '').toLowerCase();
+  const factory = String(record.factory || '').toLowerCase();
+  const employee = String(record.employee || '').toLowerCase();
+  const platform = String(record.platform || '').toLowerCase();
+  const phone = String(record.phone || '').toLowerCase();
+  const phoneDigits = phone.replace(/\D/g, '');
+  const queryDigits = query.replace(/\D/g, '');
+  const address = String(record.address || '').toLowerCase();
+
+  if (tracking.includes(query)) return 500;
+  if (queryDigits && phoneDigits.includes(queryDigits)) return 400;
+  if (customer.includes(query) || customerInfo.includes(query)) return 300;
+  if (sku.includes(query)) return 200;
+  if (factory.includes(query)) return 100;
+  if (employee.includes(query) || platform.includes(query) || address.includes(query)) return 50;
+  return 0;
+}
+
 function filterOrders() {
   const q = document.getElementById('orderSearch').value.trim().toLowerCase();
   const filter = document.getElementById('orderFilter').value;
-  
+
   // Show loading state
   document.getElementById('orderSummary').textContent = '搜索中...';
-  
+
   // Use requestAnimationFrame to not block UI
   requestAnimationFrame(() => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
     const monthAgo = new Date(now - 30*86400000).toISOString().split('T')[0];
-    
+
     filteredOrders = orderData.records.filter(r => {
-      // Text search
-      if (q) {
-        const searchStr = `${r.customer_name} ${r.sku_name} ${r.tracking_no} ${r.factory} ${r.employee} ${r.platform} ${r.phone} ${r.address}`.toLowerCase();
-        if (!searchStr.includes(q)) return false;
-      }
-      
+      if (q && getOrderSearchScore(r, q) === 0) return false;
+
       // Filter
       if (filter === 'today' && r.pay_date && !r.pay_date.startsWith(today)) return false;
       if (filter === 'week' && r.pay_date && r.pay_date.split(' ')[0] < weekAgo) return false;
@@ -1052,12 +1518,23 @@ function filterOrders() {
         if (rt === '0' || rt === '') return false;
       }
       if (filter === 'unpaid' && r.is_paid === '已打款') return false;
-      
+
       return true;
     });
 
+    if (q) {
+      filteredOrders.sort((a, b) => {
+        const scoreDiff = getOrderSearchScore(b, q) - getOrderSearchScore(a, q);
+        if (scoreDiff !== 0) return scoreDiff;
+        const dateA = getSortValue(a, 'pay_date');
+        const dateB = getSortValue(b, 'pay_date');
+        return String(dateB || '').localeCompare(String(dateA || ''));
+      });
+    } else {
+      applyCurrentSort();
+    }
+
     orderVisibleCount = PAGE_SIZE;
-    applyCurrentSort();
     updateSortArrows();
     renderOrders();
   });
@@ -1178,14 +1655,15 @@ function updateSortArrows() {
 const dataTableSortState = {
   topSkus: { field: null, asc: true },
   returnAlerts: { field: null, asc: true },
-  customerPriority: { field: 'priority_score', asc: false },
+  customerPriority: { field: 'priority_score_with_wechat', asc: false },
   customerHistory: { field: 'date', asc: false },
+  riskDetail: { field: 'pay_date', asc: false },
 };
 
 function defaultTableSortAsc(field) {
   if (field === 'days_since_last_order' || field === 'birthday_days_until') return true;
-  if (field === 'date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score') return false;
-  return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
+  if (field === 'date' || field === 'pay_date' || field === 'revenue' || field === 'revenue_180d' || field === 'priority_score' || field === 'priority_score_with_wechat' || field === 'wechat_asset_boost' || field === 'age_days' || field === 'refund_amount') return false;
+  return ['name', 'customer_name', 'employee', 'factory', 'priority_tier', 'platform', 'display_last_selling_platform', 'sku_name', 'refund_info', 'strike_window_status'].includes(field);
 }
 
 function getDataTableValue(item, field) {
@@ -1193,9 +1671,51 @@ function getDataTableValue(item, field) {
     return { P0: 0, P1: 1, P2: 2, Risk: 3 }[item[field]] ?? 99;
   }
   if (field === 'strike_window_status') {
-    return { '进入斩杀线': 0, '观察期': 1, '召回期': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
+    return { '可触达': 0, '已超窗': 1, '沉睡': 2, '冷却期': 3, '未知': 4 }[item[field]] ?? 99;
+  }
+  if (field === 'risk_stage') {
+    return { '退货订单': 0, '退货未填单号': 1, '超7天未找厂家退款': 2, '已发厂待跟进': 3 }[item[field]] ?? 99;
+  }
+  if (field === 'missing_fields_text') {
+    return (item.missing_fields || []).join('、');
   }
   return item[field];
+}
+
+function renderRecommendationTags(tags) {
+  return (tags || []).slice(0, 2).map(tag => {
+    const cls = tag === '生日加权' ? 'tag-warn'
+      : tag === '共购高频' ? 'tag-ok'
+      : tag === '多源命中' ? 'tag-ok'
+      : 'tag-steel';
+    return `<span class="tag ${cls}">${tag}</span>`;
+  }).join(' ');
+}
+
+function renderRecommendationBlock(customer, options = {}) {
+  const compact = !!options.compact;
+  const primary = customer.primary_recommendation || null;
+  const backups = customer.secondary_recommendations || [];
+  const visibleBackups = backups.slice(0, compact ? 1 : 2);
+  const hiddenBackupCount = Math.max(backups.length - visibleBackups.length, 0);
+
+  if (!primary) {
+    const fallbackItems = (customer.recommended_skus || []).slice(0, compact ? 2 : 3);
+    if (!fallbackItems.length) return '暂无';
+    const hiddenFallbackCount = Math.max((customer.recommended_skus || []).length - fallbackItems.length, 0);
+    return `<div style="font-weight:600">可试探：${fallbackItems.join(' / ')}</div>${hiddenFallbackCount ? `<div style="margin-top:4px;font-size:11px;color:var(--text-mid)">另有 ${hiddenFallbackCount} 款可推</div>` : ''}`;
+  }
+
+  const backupText = visibleBackups.map(item => item.label || `${item.sku || '-'} · ${item.factory || '-'}`).join(' / ');
+  const tagHtml = renderRecommendationTags(primary.reason_tags);
+  if (compact) {
+    return `主推：${primary.label || primary.sku || '-'}${backupText ? ` · 共购备选：${backupText}` : ''}${primary.reason ? ` · 原因：${primary.reason}` : ''}`;
+  }
+
+  return `<div style="font-weight:600">${primary.label || primary.sku || '-'}</div>
+    <div style="margin-top:4px">${tagHtml || '<span class="tag tag-steel">推荐</span>'}</div>
+    <div style="margin-top:4px;font-size:11px;color:var(--text-dim)">${customer.recommendation_summary || primary.reason || '-'}</div>
+    <div style="margin-top:4px;font-size:11px;color:var(--text-mid)">备选：${backupText || '暂无'}${hiddenBackupCount ? ` · 另有 ${hiddenBackupCount} 款可推` : ''}</div>`;
 }
 
 function sortDataTableItems(items, tableName) {
@@ -1262,6 +1782,7 @@ function sortDataTable(tableName, field) {
   if (tableName === 'topSkus' || tableName === 'returnAlerts') renderDaily();
   if (tableName === 'customerPriority') renderCustomerSections();
   if (tableName === 'customerHistory') renderCustomerHistory();
+  if (tableName === 'riskDetail') renderRiskDetailPanel();
 }
 
 function sortCustomerHistory(field) {
@@ -1302,12 +1823,16 @@ async function loadData() {
 
     dashboardData = await dashboardResp.json();
     customerActionData = await customerResp.json();
+    await loadMeetingSummary();
 
     renderDaily();
     renderOverviewSection();
     renderRiskSection();
+    renderRiskDetailPanel();
     renderTeamSection();
     renderCustomerSections();
+    renderWeeklyMeetingSection();
+    renderAiSection();
     document.getElementById('dailyLoading').style.display = 'none';
     document.getElementById('dailyContent').style.display = 'block';
   } catch(e) {
@@ -1451,9 +1976,13 @@ document.querySelectorAll('.section-btn').forEach(btn => {
 });
 
 // ===== Init =====
+restoreAiDraftState();
 document.getElementById('todayDate').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'});
 loadOrders();
 loadData();
+loadAiConfig();
+loadAiAssets();
+renderAiSection();
 
 // Load static charts when sections are activated
 let staticChartsLoaded = {};
@@ -1490,30 +2019,146 @@ function renderOverviewSection() {
   document.getElementById('o_month_badge').textContent = previous ? `${previous.month} vs ${current.month}` : (current.month || '最近月度');
 }
 
+function setRiskMode(mode) {
+  selectedRiskMode = mode;
+  riskDetailVisibleCount = 20;
+  renderRiskSection();
+  renderRiskDetailPanel();
+}
+
+function loadMoreRiskDetails() {
+  if (riskDetailLoadingMore) return;
+  riskDetailLoadingMore = true;
+  riskDetailVisibleCount += 20;
+  renderRiskDetailPanel();
+  requestAnimationFrame(() => {
+    riskDetailLoadingMore = false;
+  });
+}
+
+function handleRiskDetailScroll(event) {
+  const target = event?.target;
+  if (!target) return;
+  const remaining = target.scrollHeight - target.scrollTop - target.clientHeight;
+  if (remaining <= 120) loadMoreRiskDetails();
+}
+
+function getRiskModeMeta(risk) {
+  return {
+    return_orders: {
+      title: '退货订单数',
+      count: risk.return_orders_total || 0,
+      note: '当前列表展示这张实时视图里的全部退货订单，便于总览售后基数。',
+      severity: 'danger',
+      stage: '退货订单',
+    },
+    missing_tracking: {
+      title: '退货未填单号',
+      count: risk.missing_tracking_count || 0,
+      note: '这里会列出退款类型已存在，但退货单号还没补的单子。',
+      severity: 'danger',
+      stage: '退货未填单号',
+    },
+    pending_send_factory: {
+      title: '超7天未找厂家退款',
+      count: risk.pending_send_factory_count || 0,
+      note: '这里会列出退货单号已存在、但超过 7 天还没找厂家退款的单子，已剔除新东莞、鞋子。',
+      severity: 'warn',
+      stage: '超7天未找厂家退款',
+    },
+    factory_followup_incomplete: {
+      title: '已发厂待跟进',
+      count: risk.factory_followup_incomplete_count || 0,
+      note: '这里会列出已经发厂，但厂家确认/退款字段还没补齐的单子。',
+      severity: 'warn',
+      stage: '已发厂待跟进',
+    },
+  };
+}
+
 function renderRiskSection() {
   if (!dashboardData || !dashboardData.risk_summary) return;
 
   const risk = dashboardData.risk_summary;
-  document.getElementById('r_returns').textContent = risk.returning_orders_30d || 0;
-  document.getElementById('r_skus').textContent = risk.high_return_sku_count || 0;
-  document.getElementById('r_factories').textContent = risk.high_return_factory_count || 0;
-  document.getElementById('r_employees').textContent = risk.high_return_employee_count || 0;
+  document.getElementById('r_returns').textContent = risk.return_orders_total || 0;
+  document.getElementById('r_skus').textContent = risk.missing_tracking_count || 0;
+  document.getElementById('r_factories').textContent = risk.pending_send_factory_count || 0;
+  document.getElementById('r_employees').textContent = risk.factory_followup_incomplete_count || 0;
 
-  const blocks = [];
-  if ((risk.top_risk_skus || []).length) {
-    const sku = risk.top_risk_skus[0];
-    blocks.push(`<div class="alert alert-danger"><div class="alert-title">SKU 风险：${sku.name}</div><div class="alert-body">14天退货 ${sku.returns_30d} 单 · 退货率 ${sku.return_rate}% · 厂家 ${sku.factory}</div></div>`);
-  }
-  if ((risk.top_risk_factories || []).length) {
-    const fac = risk.top_risk_factories[0];
-    blocks.push(`<div class="alert alert-danger"><div class="alert-title">厂家风险：${fac.name}</div><div class="alert-body">14天单量 ${fac.orders} · 退货 ${fac.returns} 单 · 退货率 ${fac.return_rate}%</div></div>`);
-  }
-  if ((risk.top_risk_employees || []).length) {
-    const emp = risk.top_risk_employees[0];
-    blocks.push(`<div class="alert alert-warn"><div class="alert-title">员工风险：${emp.name}</div><div class="alert-body">14天单量 ${emp.orders} · 退货 ${emp.returns} 单 · 退货率 ${emp.return_rate}%</div></div>`);
-  }
+  const kpiMap = {
+    return_orders: 'riskKpiReturnOrders',
+    missing_tracking: 'riskKpiMissingTracking',
+    pending_send_factory: 'riskKpiPendingSend',
+    factory_followup_incomplete: 'riskKpiFactoryFollowup',
+  };
+  Object.values(kpiMap).forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById(kpiMap[selectedRiskMode])?.classList.add('active');
 
-  document.getElementById('riskSummaryBody').innerHTML = blocks.join('') || '<div class="alert alert-jade"><div class="alert-title">当前无显著风险</div><div class="alert-body">风险指标暂时平稳。</div></div>';
+}
+
+function renderRiskDetailPanel() {
+  if (!dashboardData || !dashboardData.risk_summary) return;
+
+  const risk = dashboardData.risk_summary;
+  const detailLists = risk.detail_lists || {};
+  const modeMeta = getRiskModeMeta(risk);
+  const current = modeMeta[selectedRiskMode] || modeMeta.return_orders;
+  const list = (detailLists[selectedRiskMode] || []).map(item => ({
+    ...item,
+    risk_stage: current.stage,
+    missing_fields_text: (item.missing_fields || []).join('、'),
+  }));
+  const sorted = sortDataTableItems(list, 'riskDetail');
+  const visible = sorted.slice(0, riskDetailVisibleCount);
+
+  document.getElementById('riskDetailBadge').textContent = current.title;
+  document.getElementById('riskDetailNote').textContent = current.note + (list.length > visible.length ? ' 下滑会自动加载更多。' : '');
+  document.getElementById('riskDetailMeta').textContent = `显示 ${visible.length} / 共 ${list.length} 条`;
+  document.getElementById('riskFilterReturnOrders').textContent = `退货订单（${risk.return_orders_total || 0}）`;
+  document.getElementById('riskFilterMissingTracking').textContent = `未填单号（${risk.missing_tracking_count || 0}）`;
+  document.getElementById('riskFilterPendingSend').textContent = `未找厂家退款（${risk.pending_send_factory_count || 0}）`;
+  document.getElementById('riskFilterFactoryFollowup').textContent = `待跟进（${risk.factory_followup_incomplete_count || 0}）`;
+
+  ['riskFilterReturnOrders', 'riskFilterMissingTracking', 'riskFilterPendingSend', 'riskFilterFactoryFollowup'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active');
+  });
+  const activeButtonMap = {
+    return_orders: 'riskFilterReturnOrders',
+    missing_tracking: 'riskFilterMissingTracking',
+    pending_send_factory: 'riskFilterPendingSend',
+    factory_followup_incomplete: 'riskFilterFactoryFollowup',
+  };
+  document.getElementById(activeButtonMap[selectedRiskMode])?.classList.add('active');
+
+  const body = document.getElementById('riskDetailBody');
+  body.innerHTML = visible.map(item => {
+    const missingHtml = item.missing_fields && item.missing_fields.length
+      ? `<div class="risk-detail-sub">缺：${item.missing_fields.map(field => `<span class="tag tag-warn">${field}</span>`).join(' ')}</div>`
+      : '<div class="risk-detail-sub">字段已齐</div>';
+    const dateSummary = [item.send_factory_date ? `发厂 ${formatDateTime(item.send_factory_date)}` : null, item.confirm_date ? `确认 ${formatDateTime(item.confirm_date)}` : null].filter(Boolean).join(' · ');
+    return `<tr>
+      <td>
+        <div class="risk-detail-main">${item.customer_name || '-'} / ${item.sku_name || '-'}</div>
+        <div class="risk-detail-sub">厂家：${item.factory || '-'} · 退款类型：${item.refund_type || '-'}</div>
+      </td>
+      <td>${item.platform || '-'}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.pay_date)}</td>
+      <td>${item.employee || '-'}</td>
+      <td><span class="tag ${current.severity === 'danger' ? 'tag-danger' : 'tag-warn'}">${item.risk_stage || '-'}</span></td>
+      <td class="risk-detail-mono">${item.tracking_no || '-'}</td>
+      <td class="risk-detail-mono">${item.return_tracking || '-'}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.send_factory_date)}</td>
+      <td class="risk-detail-mono">${formatDateTime(item.confirm_date)}</td>
+      <td class="risk-detail-mono">${item.refund_amount == null ? '-' : `¥${Number(item.refund_amount).toLocaleString()}`}</td>
+      <td class="risk-detail-mono">${item.age_days == null ? '-' : `${item.age_days}天`}</td>
+      <td>
+        <div>${item.missing_fields_text || (dateSummary || item.return_status || '当前无补充说明')}</div>
+        ${missingHtml}
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--text-dim)">当前分类下暂无风险明细。</td></tr>';
+
+  updateDataTableArrows('riskDetail');
 }
 
 function renderTeamSection() {
@@ -1521,6 +2166,8 @@ function renderTeamSection() {
 
   const team = dashboardData.employees.slice(0, 3);
   const maxOrders = Math.max(...team.map(e => e.orders || 0), 1);
+  const avgDailyOrdersQuality = dashboardData.data_quality?.avg_daily_orders;
+  const avgDailyOrdersNote = avgDailyOrdersQuality?.note || '';
   const body = document.getElementById('teamCardsBody');
   body.innerHTML = team.map(emp => {
     const returnRate = emp.return_rate || 0;
@@ -1528,7 +2175,11 @@ function renderTeamSection() {
     const barClass = returnRate > 20 ? 'danger' : returnRate > 10 ? 'warn' : 'ok';
     const rateClass = returnRate > 15 ? 'danger' : 'ok';
     const barWidth = Math.max(8, Math.round(((emp.orders || 0) / maxOrders) * 100));
-    const note = returnRate > 15 ? '退货压力偏高，需重点复盘' : '退货控制稳定，可继续推进';
+    const noteParts = [returnRate > 15 ? '退货压力偏高，需重点复盘' : '退货控制稳定，可继续推进'];
+    if (!emp.avg_daily_orders_available && avgDailyOrdersNote) {
+      noteParts.push(avgDailyOrdersNote);
+    }
+    const note = noteParts.join('；');
     return `<div class="emp-card">
       <div class="emp-card-header">
         <div class="emp-name">${emp.name}</div>
@@ -1548,8 +2199,16 @@ function renderTeamSection() {
           <div class="emp-stat-value">${emp.orders || 0}</div>
         </div>
         <div class="emp-stat">
-          <div class="emp-stat-label">14天退货</div>
-          <div class="emp-stat-value">${emp.returns || 0}</div>
+          <div class="emp-stat-label">日均单量</div>
+          <div class="emp-stat-value">${emp.avg_daily_orders == null ? '-' : emp.avg_daily_orders}</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">销售平均利润率</div>
+          <div class="emp-stat-value">${emp.sales_avg_profit_margin ?? 0}%</div>
+        </div>
+        <div class="emp-stat">
+          <div class="emp-stat-label">本月促单量</div>
+          <div class="emp-stat-value">${emp.monthly_promo_orders ?? 0}</div>
         </div>
       </div>
       <div class="emp-bar"><div class="emp-bar-fill ${barClass}" style="width:${barWidth}%"></div></div>
@@ -1579,9 +2238,66 @@ function getCustomerHistoryRecords(customer) {
     }));
 }
 
+function renderScoreBreakdownTags(breakdown) {
+  if (!breakdown) return '';
+  const items = [
+    ['窗口', breakdown.strike_window],
+    ['14天单量', breakdown.orders_14d],
+    ['180天单量', breakdown.orders_180d],
+    ['180天金额', breakdown.revenue_180d],
+    ['14天退货', breakdown.return_orders_14d],
+    ['180天退货率', breakdown.return_rate_180d],
+    ['生日加权', breakdown.birthday_bonus],
+    ['微信资产', breakdown.wechat_asset_boost],
+  ].filter(([, value]) => value);
+  return items.map(([label, value]) => {
+    const cls = value > 0 ? 'tag-ok' : 'tag-danger';
+    const prefix = value > 0 ? '+' : '';
+    return `<span class="tag ${cls}">${label} ${prefix}${value}</span>`;
+  }).join(' ');
+}
+
+function formatSignedScore(value) {
+  const num = Number(value || 0);
+  if (!num) return '0';
+  return `${num > 0 ? '+' : ''}${num}`;
+}
+
+function wechatAssetTagClass(label) {
+  if (label.includes('高价值') || label.includes('回复积极') || label.includes('明确补货')) return 'tag-ok';
+  if (label.includes('暂不需要') || label.includes('降温')) return 'tag-danger';
+  if (label.includes('缺货') || label.includes('价格敏感') || label.includes('报价后')) return 'tag-warn';
+  if (label.includes('发了不回')) return 'tag-danger';
+  return 'tag-steel';
+}
+
+function renderWechatAssetCell(customer) {
+  const asset = customer.wechat_asset || null;
+  if (!asset) return '<span class="tag tag-steel">未绑定</span>';
+  const labels = (asset.labels || []).slice(0, 3);
+  const hiddenCount = Math.max((asset.labels || []).length - labels.length, 0);
+  const tags = labels.map(label => `<span class="tag ${wechatAssetTagClass(label)}">${escapeHtml(label)}</span>`).join(' ');
+  const evidence = asset.evidence ? `<div style="font-size:11px;color:var(--text-dim);margin-top:4px;max-width:260px">${escapeHtml(asset.evidence).slice(0, 90)}${asset.evidence.length > 90 ? '…' : ''}</div>` : '';
+  return `${tags || '<span class="tag tag-steel">微信资产</span>'}${hiddenCount ? ` <span class="tag tag-steel">+${hiddenCount}</span>` : ''}${evidence}`;
+}
+
+function renderWechatScoreCell(customer) {
+  const base = customer.priority_score ?? 0;
+  const adjusted = customer.priority_score_with_wechat ?? base;
+  return `<div style="font-family:var(--mono);font-weight:700;color:var(--gold)">${adjusted}</div><div style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">原 ${base}</div>`;
+}
+
+function renderWechatBoostCell(customer) {
+  const boost = Number(customer.wechat_asset_boost || 0);
+  const cls = boost > 0 ? 'tag-ok' : boost < 0 ? 'tag-danger' : 'tag-steel';
+  const asset = customer.wechat_asset || null;
+  return `<span class="tag ${cls}">${formatSignedScore(boost)}</span>${asset?.temperature ? `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">温度：${escapeHtml(asset.temperature)}</div>` : ''}`;
+}
+
 function renderCustomerHistory() {
   if (!selectedCustomerKey || !customerActionData) {
     document.getElementById('customerHistoryPanel').style.display = 'none';
+    document.getElementById('customerHistoryReason').style.display = 'none';
     customerHistoryVisibleCount = 20;
     return;
   }
@@ -1589,17 +2305,1049 @@ function renderCustomerHistory() {
   const customer = (customerActionData.customers || []).find(c => c.customer_key === selectedCustomerKey);
   if (!customer) {
     document.getElementById('customerHistoryPanel').style.display = 'none';
+    document.getElementById('customerHistoryReason').style.display = 'none';
     return;
   }
 
   const records = sortDataTableItems(getCustomerHistoryRecords(customer), 'customerHistory');
   const visibleRecords = records.slice(0, customerHistoryVisibleCount);
+  const reasonBox = document.getElementById('customerHistoryReason');
+  const breakdown = customer.score_breakdown || null;
   document.getElementById('customerHistoryPanel').style.display = 'block';
   document.getElementById('customerHistoryMeta').textContent = `${visibleRecords.length} / ${records.length} 条历史订单`;
-  document.getElementById('customerHistorySummary').textContent = `${customer.customer_name || '-'} · 手机 ${customer.phone || '-'} · 负责人 ${customer.employee || '-'} · 最近下单 ${customer.last_order_date || '-'} · 180天金额 ¥${(customer.revenue_180d || 0).toLocaleString()} · 生日 ${customer.birthday_month_day || '-'}${customer.birthday_days_until != null ? `（${customer.birthday_days_until}天后）` : ''} · 偏好 ${((customer.birthday_style_preferences || []).slice(0,3).join('/') || '-') } · 期待礼物 ${customer.birthday_expected_gift || '-'}`;
+  document.getElementById('customerHistorySummary').textContent = `${customer.customer_name || '-'} · 手机 ${customer.phone || '-'} · 负责人 ${customer.employee || '-'} · 最近下单 ${customer.last_order_date || '-'} · 365天金额 ¥${(customer.revenue_365d || 0).toLocaleString()} · 累计总金额 ¥${(customer.revenue_all || 0).toLocaleString()} · 生日 ${customer.birthday_month_day || '-'}${customer.birthday_days_until != null ? `（${customer.birthday_days_until}天后）` : ''} · 偏好 ${((customer.birthday_style_preferences || []).slice(0,3).join('/') || '-') } · 期待礼物 ${customer.birthday_expected_gift || '-'}`;
+  reasonBox.style.display = 'block';
+  const wechatAsset = customer.wechat_asset || null;
+  const wechatAssetDetail = wechatAsset
+    ? `<br>微信资产：原分 ${customer.priority_score ?? '-'} + 微信 ${formatSignedScore(customer.wechat_asset_boost)} = 试算 ${customer.priority_score_with_wechat ?? '-'}；${escapeHtml(wechatAsset.label_summary || '已绑定微信资产')}${wechatAsset.evidence ? `<br>触发证据：${escapeHtml(wechatAsset.evidence)}` : ''}${wechatAsset.recent_snippet ? `<br>最近聊天：${escapeHtml(wechatAsset.recent_snippet)}` : ''}`
+    : '';
+  reasonBox.innerHTML = `<div class="alert-title">触达说明</div><div class="alert-body">优先分 ${customer.priority_score ?? '-'} · 试算 ${customer.priority_score_with_wechat ?? customer.priority_score ?? '-'} · ${customer.priority_tier || '-'} · ${customer.strike_window_status || '-'}${customer.expected_gap_days ? ` · 预计周期 ${customer.expected_gap_days}天` : ''}<br>${customer.action_reason || '暂无促单理由'}${customer.window_start != null && customer.window_end != null ? `<br>建议窗口：第 ${customer.window_start} ~ ${customer.window_end} 天` : ''}${customer.dormant_after ? ` · 沉睡阈值 ${customer.dormant_after} 天` : ''}<br>${customer.recommendation_summary || '暂无推荐说明'}${customer.pitch_direction ? `<br>建议话术：${customer.pitch_direction}` : ''}${wechatAssetDetail}<div style="margin-top:8px">${renderScoreBreakdownTags(breakdown)}</div></div>`;
   document.getElementById('customerHistoryBody').innerHTML = visibleRecords.map(r => `<tr><td style="font-family:var(--mono)">${r.date_display || '-'}</td><td>${r.customer_name}</td><td style="font-family:var(--mono)">${r.phone}</td><td>${r.platform}</td><td>${r.sku_name}</td><td>${r.factory}</td><td>${r.refund_info}</td><td>${r.refund_reason}</td><td style="font-family:var(--mono)">¥${(Number(r.revenue) || 0).toLocaleString()}</td></tr>`).join('') || '<tr><td colspan="9">暂无历史订单</td></tr>';
   document.getElementById('customerHistoryMoreBtn').style.display = records.length > visibleRecords.length ? 'inline-flex' : 'none';
   updateDataTableArrows('customerHistory');
+}
+
+async function loadMeetingSummary() {
+  try {
+    const resp = await fetch('meeting_summary.json');
+    if (!resp.ok) throw new Error('meeting_summary.json not found');
+    meetingSummaryData = await resp.json();
+  } catch (e) {
+    meetingSummaryData = null;
+  }
+}
+
+async function loadAiConfig() {
+  aiConfigLoading = true;
+  dewuError = '';
+  freeImageError = '';
+  try {
+    const resp = await fetch('/api/ai/dewu/config', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('AI config request failed');
+    const payload = await resp.json();
+    aiConfig = payload;
+  } catch (e) {
+    aiConfig = null;
+    const message = 'AI 配置读取失败。请先重启当前 dashboard 服务；新版本会默认直连本机 CLIProxyAPI。';
+    dewuError = message;
+    freeImageError = message;
+  } finally {
+    aiConfigLoading = false;
+    renderAiSection();
+  }
+}
+
+function applyAiAssetsSnapshot(nextAiAssets) {
+  aiAssets = nextAiAssets && typeof nextAiAssets === 'object' ? nextAiAssets : null;
+  aiAssetsLoading = false;
+  if (!aiAssets) {
+    aiAssetsError = '当前还没读到飞书同步下来的模板缓存。先运行一次 npm run refresh，页面就会自动带上飞书里的提示词和素材。';
+  }
+}
+
+async function loadAiAssets(shouldRefresh = true) {
+  aiAssetsLoading = true;
+  aiAssetsError = '';
+  try {
+    const apiPath = shouldRefresh ? '/api/ai/assets?refresh=1' : '/api/ai/assets';
+    const resp = await fetch(apiPath, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('AI assets request failed');
+    const payload = await resp.json();
+    applyAiAssetsSnapshot(payload.aiAssets);
+  } catch (e) {
+    try {
+      const fallbackResp = await fetch('ai_assets.json', { cache: 'no-store' });
+      if (!fallbackResp.ok) throw new Error('ai_assets.json not found');
+      applyAiAssetsSnapshot(await fallbackResp.json());
+    } catch {
+      aiAssets = null;
+      aiAssetsError = '当前还没读到飞书同步下来的模板缓存。先运行一次 npm run refresh，页面就会自动带上飞书里的提示词和素材。';
+    }
+  } finally {
+    aiAssetsLoading = false;
+    renderAiSection();
+  }
+}
+
+function readDraftValue(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeDraftValue(key, value) {
+  try {
+    if (value == null || value === '') {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures in private mode or limited environments.
+  }
+}
+
+function restoreAiDraftState() {
+  freeImagePrompt = readDraftValue(AI_DRAFT_STORAGE_KEYS.freePrompt) || '';
+  selectedFreeTemplateId = readDraftValue(AI_DRAFT_STORAGE_KEYS.freeTemplateId) || null;
+}
+
+function persistAiDraftState() {
+  writeDraftValue(AI_DRAFT_STORAGE_KEYS.freePrompt, freeImagePrompt);
+  writeDraftValue(AI_DRAFT_STORAGE_KEYS.freeTemplateId, selectedFreeTemplateId || '');
+}
+
+function getReadableFileSize(bytes) {
+  if (!bytes) return '-';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function readBlobAsDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        dataUrl: String(reader.result || ''),
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadAssetUrlAsUpload(assetUrl, fallbackName, extra = {}) {
+  const resp = await fetch(assetUrl, { cache: 'no-store' });
+  if (!resp.ok) {
+    throw new Error('默认素材读取失败，请先重新执行 npm run refresh。');
+  }
+  const blob = await resp.blob();
+  const dataUrl = await readBlobAsDataUrl(blob);
+  return {
+    name: fallbackName || 'reference-image',
+    size: blob.size,
+    type: blob.type || 'image/jpeg',
+    dataUrl,
+    ...extra,
+  };
+}
+
+function compareBySortAndName(a, b) {
+  const sortDiff = Number(a?.sort ?? Number.MAX_SAFE_INTEGER) - Number(b?.sort ?? Number.MAX_SAFE_INTEGER);
+  if (sortDiff !== 0) return sortDiff;
+  return String(a?.name || '').localeCompare(String(b?.name || ''), 'zh-CN');
+}
+
+function normalizeTemplateTools(template) {
+  return Array.isArray(template?.tools)
+    ? template.tools.map(item => String(item || '').trim()).filter(Boolean)
+    : [];
+}
+
+function getFreeImageTemplates() {
+  const syncedTemplates = Array.isArray(aiAssets?.prompts)
+    ? aiAssets.prompts
+      .filter(item => item && item.enabled !== false && String(item.prompt || '').trim())
+      .sort(compareBySortAndName)
+    : [];
+  if (aiAssetsLoading && !aiAssets) return [];
+  return syncedTemplates.length ? syncedTemplates : FALLBACK_FREE_IMAGE_TEMPLATES.slice().sort(compareBySortAndName);
+}
+
+function getFreeTemplateById(templateId) {
+  if (!templateId) return null;
+  return getFreeImageTemplates().find(item => item.record_id === templateId) || null;
+}
+
+function getAllSyncedAiTemplates() {
+  const prompts = Array.isArray(aiAssets?.prompts) ? aiAssets.prompts : [];
+  return prompts
+    .filter(item => item && item.enabled !== false && item.record_id && !String(item.record_id).startsWith('fallback-'))
+    .sort(compareBySortAndName);
+}
+
+function getAiTemplateById(templateId) {
+  if (!templateId) return null;
+  return getAllSyncedAiTemplates().find(item => item.record_id === templateId) || null;
+}
+
+function uniqueStrings(values) {
+  return Array.from(new Set((values || []).filter(Boolean)));
+}
+
+function splitTextList(value) {
+  if (value == null) return [];
+  return uniqueStrings(
+    String(value)
+      .split(/[,\n，、]/)
+      .map(item => item.trim())
+      .filter(Boolean),
+  );
+}
+
+function formatAiMaterialTimestamp(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function buildGeneratedMaterialName(source, template) {
+  const prefix = template?.name || (source === 'dewu' ? '得物生成结果' : 'AI 生图结果');
+  return `${prefix} · ${formatAiMaterialTimestamp()}`;
+}
+
+function getDefaultTemplateForGeneratedMaterial(source) {
+  const syncedTemplates = getAllSyncedAiTemplates();
+  if (!syncedTemplates.length) return null;
+  if (source === 'image') {
+    return getAiTemplateById(selectedFreeTemplateId) || syncedTemplates[0];
+  }
+  return syncedTemplates.find(item => normalizeTemplateTools(item).includes('生成得物')) || syncedTemplates[0];
+}
+
+function getDefaultGeneratedMaterialType(source) {
+  return source === 'dewu' ? '构图样例' : '参考图';
+}
+
+function getAiNoticeMarkup() {
+  if (!aiActionNotice?.text) return '';
+  if (aiActionNotice.tone === 'success') return '';
+  const toneClass = aiActionNotice.tone === 'danger'
+    ? 'alert-danger'
+    : aiActionNotice.tone === 'warn'
+      ? 'alert-warn'
+      : 'alert-jade';
+  const title = aiActionNotice.title || '最近操作';
+  return `<div class="alert ${toneClass}"><div class="alert-title">${escapeHtml(title)}</div><div class="alert-body">${escapeHtml(aiActionNotice.text)}</div></div>`;
+}
+
+function getAiMaterialsMap() {
+  const materials = Array.isArray(aiAssets?.materials)
+    ? aiAssets.materials.filter(item => item && item.enabled !== false)
+    : [];
+  return new Map(materials.map(item => [item.record_id, item]));
+}
+
+function getSelectedFreeTemplate() {
+  if (!selectedFreeTemplateId) return null;
+  const template = getFreeTemplateById(selectedFreeTemplateId);
+  if (template) return template;
+  if (aiAssetsLoading) return null;
+  selectedFreeTemplateId = null;
+  persistAiDraftState();
+  return null;
+}
+
+function getSelectedTemplateMaterials() {
+  const template = getSelectedFreeTemplate();
+  if (!template) return [];
+  const materialsMap = getAiMaterialsMap();
+  return (template.default_material_ids || [])
+    .map(materialId => materialsMap.get(materialId))
+    .filter(Boolean);
+}
+
+function getAiUiMeta() {
+  const proxyEnabled = !!aiConfig?.enabled;
+  const acceptedMimeText = (aiConfig?.acceptedMimeTypes || ['image/jpeg', 'image/png', 'image/webp'])
+    .map(type => type.replace('image/', '').toUpperCase())
+    .join(' / ');
+  const limitText = getReadableFileSize(aiConfig?.maxFileBytes || 0);
+  const proxyBaseUrl = aiConfig?.proxyBaseUrl || 'http://127.0.0.1:8317';
+  const upstreamPath = aiConfig?.upstreamPath || '/v1/chat/completions';
+  const requestMode = aiConfig?.requestMode || 'chat-completions';
+  const modelName = aiConfig?.model || 'gemini-3.1-flash-image';
+  const usesDefaultLocalProxy = !!aiConfig?.usesDefaultLocalProxy;
+  const proxyDescription = proxyEnabled
+    ? requestMode === 'responses'
+      ? `当前通过 dashboard 服务端转发到 ${escapeHtml(proxyBaseUrl)}${escapeHtml(upstreamPath)}，以 OpenAI Responses 图片工具方式请求 ${escapeHtml(modelName)}。当前不会主动传 size，输出尺寸交给上游默认策略决定；浏览器不会直接暴露 key。`
+      : requestMode === 'images-edits'
+        ? `当前通过 dashboard 服务端转发到 ${escapeHtml(proxyBaseUrl)}${escapeHtml(upstreamPath)}，以 OpenAI 图片编辑接口请求 ${escapeHtml(modelName)}。如果上游只提供 /v1/chat/completions，那么 gpt-image 模型会直接失败；浏览器不会直接暴露 key。`
+        : `当前通过 dashboard 服务端转发到 ${escapeHtml(proxyBaseUrl)}${escapeHtml(upstreamPath)}，请求 ${escapeHtml(modelName)}。${usesDefaultLocalProxy ? '默认本地值是 http://127.0.0.1:8317 + Bearer cliproxyapi-local。' : ''}浏览器不会直接暴露 key。`
+    : 'AI 代理尚未启用。默认本地值是 http://127.0.0.1:8317 + Bearer cliproxyapi-local；如果页面还在提示未启用，请重启当前 dashboard 服务。';
+  return {
+    proxyEnabled,
+    acceptedMimeText,
+    limitText,
+    proxyDescription,
+    requiredUploadCount: Number(aiConfig?.requiredUploadCount || 3),
+    freeImageMaxUploadCount: Number(aiConfig?.freeImageMaxUploadCount || 6),
+    hasBaseImage: !!aiConfig?.baseImageReady,
+    modelName,
+    dewuPromptSource: aiConfig?.dewuPromptSource || 'built-in',
+    dewuPromptTemplateName: aiConfig?.dewuPromptTemplateName || null,
+  };
+}
+
+function renderGeneratedMaterialSavePanel(source) {
+  if (!aiGeneratedMaterialDraft || aiGeneratedMaterialDraft.source !== source) return '';
+  const templates = getAllSyncedAiTemplates();
+  if (!templates.length) {
+    return `<div class="alert alert-warn" style="margin-top:16px"><div class="alert-title">暂时无法保存</div><div class="alert-body">当前还没有飞书同步模板，所以这张图暂时没法直接写回模板。先运行一次 npm run refresh，或者先在飞书里建好模板再试。</div></div>`;
+  }
+  const templateOptions = templates.map(template => {
+    const tools = normalizeTemplateTools(template);
+    const toolLabel = tools.length ? ` · ${tools.join(' / ')}` : '';
+    return `<option value="${escapeHtml(template.record_id)}" ${aiGeneratedMaterialDraft.templateId === template.record_id ? 'selected' : ''}>${escapeHtml((template.name || template.shortcut_name || '未命名模板') + toolLabel)}</option>`;
+  }).join('');
+  const materialTypeOptions = AI_MATERIAL_TYPE_OPTIONS.map(item => `<option value="${escapeHtml(item)}" ${aiGeneratedMaterialDraft.materialType === item ? 'selected' : ''}>${escapeHtml(item)}</option>`).join('');
+  return `<div class="ai-prompt-card" style="margin-top:16px">
+    <div class="ai-prompt-label">添加到模板</div>
+    <div class="ai-status-inline">保存后会写入飞书素材库，并自动关联到这个模板的默认素材里。</div>
+    <div class="ai-form-grid">
+      <div class="ai-form-field">
+        <div class="ai-form-label">目标模板</div>
+        <select class="search-input ai-form-select" onchange="updateGeneratedMaterialDraft('templateId', this.value)">
+          ${templateOptions}
+        </select>
+      </div>
+      <div class="ai-form-field">
+        <div class="ai-form-label">素材类型</div>
+        <select class="search-input ai-form-select" onchange="updateGeneratedMaterialDraft('materialType', this.value)">
+          ${materialTypeOptions}
+        </select>
+      </div>
+      <div class="ai-form-field full">
+        <div class="ai-form-label">素材名称</div>
+        <input class="search-input ai-form-input" value="${escapeHtml(aiGeneratedMaterialDraft.materialName || '')}" placeholder="例如：高级海报 · 主视觉 01" oninput="updateGeneratedMaterialDraft('materialName', this.value)">
+      </div>
+      <div class="ai-form-field full">
+        <div class="ai-form-label">素材说明</div>
+        <textarea class="ai-prompt-textarea ai-form-textarea" placeholder="可以写这张图适合做什么，或者保留当前生成提示词摘要。" oninput="updateGeneratedMaterialDraft('description', this.value)">${escapeHtml(aiGeneratedMaterialDraft.description || '')}</textarea>
+      </div>
+      <div class="ai-form-field full">
+        <div class="ai-form-label">标签</div>
+        <input class="search-input ai-form-input" value="${escapeHtml(aiGeneratedMaterialDraft.tags || '')}" placeholder="例如：AI生成, 海报, 奶白夹克" oninput="updateGeneratedMaterialDraft('tags', this.value)">
+      </div>
+    </div>
+    <div class="ai-section-actions" style="margin-top:16px">
+      <button class="search-btn" style="background:var(--gold);color:#fff" onclick="submitGeneratedMaterialSave()" ${aiGeneratedMaterialSaving ? 'disabled' : ''}>${aiGeneratedMaterialSaving ? '保存中…' : '保存到模板'}</button>
+      <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="cancelGeneratedMaterialSave()" ${aiGeneratedMaterialSaving ? 'disabled' : ''}>取消</button>
+    </div>
+  </div>`;
+}
+
+function openGeneratedMaterialSave(source) {
+  const result = source === 'dewu' ? dewuResult : freeImageResult;
+  if (!result?.imageDataUrl) return;
+  const template = getDefaultTemplateForGeneratedMaterial(source);
+  if (!template) {
+    aiActionNotice = {
+      tone: 'warn',
+      title: '还不能保存',
+      text: '当前还没有飞书同步模板，先运行一次 npm run refresh，或者先在飞书里补好模板。',
+    };
+    renderAiSection();
+    return;
+  }
+  const defaultTags = uniqueStrings([
+    ...(Array.isArray(template.tags) ? template.tags : []),
+    source === 'dewu' ? '得物生成' : 'AI生成',
+  ]).join(', ');
+  aiGeneratedMaterialDraft = {
+    source,
+    imageDataUrl: result.imageDataUrl,
+    templateId: template.record_id,
+    materialType: getDefaultGeneratedMaterialType(source),
+    materialName: buildGeneratedMaterialName(source, template),
+    description: source === 'image'
+      ? (freeImagePrompt.trim() || template.note || '')
+      : (dewuResult?.model ? `生成得物结果，模型：${dewuResult.model}` : '生成得物结果。'),
+    tags: defaultTags,
+  };
+  aiActionNotice = null;
+  renderAiSection();
+}
+
+function updateGeneratedMaterialDraft(field, value) {
+  if (!aiGeneratedMaterialDraft) return;
+  aiGeneratedMaterialDraft = {
+    ...aiGeneratedMaterialDraft,
+    [field]: String(value || ''),
+  };
+  renderAiSection();
+}
+
+function cancelGeneratedMaterialSave() {
+  aiGeneratedMaterialDraft = null;
+  renderAiSection();
+}
+
+async function submitGeneratedMaterialSave() {
+  if (aiGeneratedMaterialSaving || !aiGeneratedMaterialDraft) return;
+  const templateId = String(aiGeneratedMaterialDraft.templateId || '').trim();
+  const materialName = String(aiGeneratedMaterialDraft.materialName || '').trim();
+  if (!templateId) {
+    aiActionNotice = { tone: 'danger', title: '保存失败', text: '请先选一个要关联的模板。' };
+    renderAiSection();
+    return;
+  }
+  if (!materialName) {
+    aiActionNotice = { tone: 'danger', title: '保存失败', text: '请先给这张素材起一个名字。' };
+    renderAiSection();
+    return;
+  }
+
+  aiGeneratedMaterialSaving = true;
+  aiActionNotice = null;
+  if (aiGeneratedMaterialDraft.source === 'dewu') dewuError = '';
+  else freeImageError = '';
+  renderAiSection();
+
+  try {
+    const resp = await fetch('/api/ai/material/save-generated', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(aiGeneratedMaterialDraft),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok || !payload.ok) {
+      throw new Error(payload.error || '保存失败，请稍后重试。');
+    }
+
+    const savedTemplate = getAiTemplateById(templateId);
+    if (savedTemplate) {
+      selectedFreeTemplateId = templateId;
+      persistAiDraftState();
+    }
+
+    aiGeneratedMaterialDraft = null;
+    if (payload.aiAssets) {
+      applyAiAssetsSnapshot(payload.aiAssets);
+    } else {
+      await loadAiAssets(false);
+    }
+    aiActionNotice = {
+      tone: payload.refreshWarning ? 'warn' : 'success',
+      title: payload.refreshWarning ? '已保存，但缓存待刷新' : '保存成功',
+      text: payload.refreshWarning || `素材“${payload.materialName || materialName}”已经加入模板“${payload.templateName || '未命名模板'}”。`,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '保存失败，请稍后重试。';
+    aiActionNotice = { tone: 'danger', title: '保存失败', text: message };
+  } finally {
+    aiGeneratedMaterialSaving = false;
+    renderAiSection();
+  }
+}
+
+async function deleteSelectedFreeImageTemplate() {
+  if (aiTemplateDeleting) return;
+  const template = getSelectedFreeTemplate();
+  const syncedTemplate = template ? getAiTemplateById(template.record_id) : null;
+  if (!syncedTemplate) {
+    aiActionNotice = { tone: 'danger', title: '删除失败', text: '当前模板不是飞书同步模板，暂时不能直接删除。' };
+    renderAiSection();
+    return;
+  }
+  const confirmed = window.confirm(`确认删除模板“${syncedTemplate.name || syncedTemplate.shortcut_name || '未命名模板'}”吗？这个动作会直接删除飞书里的模板记录。`);
+  if (!confirmed) return;
+
+  aiTemplateDeleting = true;
+  aiActionNotice = null;
+  freeImageError = '';
+  renderAiSection();
+
+  try {
+    const resp = await fetch('/api/ai/template/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId: syncedTemplate.record_id }),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok || !payload.ok) {
+      throw new Error(payload.error || '模板删除失败，请稍后重试。');
+    }
+
+    selectedFreeTemplateId = null;
+    persistAiDraftState();
+    if (payload.aiAssets) {
+      applyAiAssetsSnapshot(payload.aiAssets);
+    } else {
+      await loadAiAssets(false);
+    }
+    aiActionNotice = {
+      tone: payload.refreshWarning ? 'warn' : 'success',
+      title: payload.refreshWarning ? '模板已删，但缓存待刷新' : '模板已删除',
+      text: payload.refreshWarning || `模板“${payload.templateName || syncedTemplate.name || '未命名模板'}”已经从飞书删除。`,
+    };
+  } catch (e) {
+    aiActionNotice = { tone: 'danger', title: '删除失败', text: e instanceof Error ? e.message : '模板删除失败，请稍后重试。' };
+  } finally {
+    aiTemplateDeleting = false;
+    renderAiSection();
+  }
+}
+
+function renderDewuUploadCard(upload, index) {
+  const preview = upload
+    ? `<img src="${upload.dataUrl}" alt="商品图 ${index + 1}">`
+    : `<div class="ai-upload-empty">上传商品图 ${index + 1}<br>支持 jpg / png / webp</div>`;
+  const meta = upload
+    ? `<div class="ai-upload-meta">${escapeHtml(upload.name)}<br>${getReadableFileSize(upload.size)}</div>`
+    : '<div class="ai-upload-meta">用于替换中间报告里的对应缩略图位。</div>';
+  const removeButton = upload
+    ? `<button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="clearDewuUpload(${index})">清除</button>`
+    : '';
+  return `<div class="ai-upload-card">
+    <div class="ai-upload-label">商品图 ${index + 1}</div>
+    <div class="ai-upload-preview">${preview}</div>
+    ${meta}
+    <div class="ai-upload-actions">
+      <label class="search-btn" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)">
+        ${upload ? '重新上传' : '选择图片'}
+        <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handleDewuUpload(event, ${index})">
+      </label>
+      ${removeButton}
+    </div>
+    </div>`;
+}
+
+function renderFreeImageUploadCard(upload, index) {
+  return `<div class="ai-upload-card compact">
+    <div class="ai-upload-label">参考图 ${index + 1}</div>
+    <div class="ai-upload-preview"><img src="${upload.dataUrl}" alt="参考图 ${index + 1}"></div>
+    <div class="ai-upload-meta">${escapeHtml(upload.name)}<br>${getReadableFileSize(upload.size)}</div>
+    <div class="ai-upload-actions">
+      <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="clearFreeImageUpload(${index})">移除</button>
+    </div>
+  </div>`;
+}
+
+function renderTemplateMaterialCard(material) {
+  const preview = material.preview_url
+    ? `<img src="${material.preview_url}" alt="">`
+    : '<div class="ai-upload-empty">暂无预览</div>';
+  const tags = (material.tags || []).slice(0, 3).map(tag => `<span class="tag tag-steel">${escapeHtml(tag)}</span>`).join(' ');
+  const description = material.description
+    ? escapeHtml(material.description)
+    : '已从飞书素材库同步，可一键加入当前参考图列表。';
+  return `<div class="ai-material-card">
+    <div class="ai-material-thumb">${preview}</div>
+    <div class="ai-material-body">
+      <div class="ai-material-title">${escapeHtml(material.name || '默认素材')}</div>
+      <div class="ai-material-desc">${description}</div>
+      ${tags ? `<div class="ai-material-tags">${tags}</div>` : ''}
+    </div>
+    <div class="ai-material-actions">
+      <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick='addDefaultMaterialToFreeImage(${JSON.stringify(material.record_id)})' ${freeImageMaterialImporting ? 'disabled' : ''}>${freeImageMaterialImporting ? '读取中…' : '加入参考图'}</button>
+    </div>
+  </div>`;
+}
+
+function renderFreeImageSection(body) {
+  const ui = getAiUiMeta();
+  const promptText = freeImagePrompt.trim();
+  const uploadedCount = freeImageUploads.length;
+  const templates = getFreeImageTemplates();
+  const selectedTemplate = getSelectedFreeTemplate();
+  const syncedSelectedTemplate = selectedTemplate ? getAiTemplateById(selectedTemplate.record_id) : null;
+  const selectedTemplateMaterials = getSelectedTemplateMaterials();
+  const hasSyncedPromptTemplates = Array.isArray(aiAssets?.prompts)
+    && aiAssets.prompts.some(item => item && item.enabled !== false && String(item.prompt || '').trim());
+  const disabledReason = aiConfigLoading
+    ? '正在读取本地 AI 配置…'
+    : !aiConfig
+      ? 'AI 配置读取失败'
+      : !ui.proxyEnabled
+        ? 'AI 代理未配置'
+        : !promptText
+          ? '先输入提示词'
+          : '';
+  const shouldDisableGenerate = freeImageSubmitting || !!disabledReason;
+  const templateSourceText = aiAssetsLoading
+    ? '模板同步中…'
+    : hasSyncedPromptTemplates
+      ? `飞书模板 ${templates.length} 个 · 自动同步`
+      : '内置模板 · 飞书同步未就绪';
+  const alerts = [];
+  if (aiAssetsError && !aiAssets) {
+    alerts.push(`<div class="alert alert-warn"><div class="alert-title">飞书模板未就绪</div><div class="alert-body">${escapeHtml(aiAssetsError)}</div></div>`);
+  }
+  if (freeImageError) {
+    alerts.push(`<div class="alert alert-danger"><div class="alert-title">生成失败</div><div class="alert-body">${escapeHtml(freeImageError)}</div></div>`);
+  }
+  const noticeMarkup = getAiNoticeMarkup();
+  if (noticeMarkup) alerts.push(noticeMarkup);
+
+  const shortcutButtons = templates.map(template => {
+    const isActive = selectedTemplate?.record_id === template.record_id;
+    const label = template.shortcut_name || template.name || '模板';
+    const buttonStyle = isActive
+      ? 'background:var(--gold);color:#fff;border:1px solid var(--gold)'
+      : 'background:var(--surface);color:var(--text);border:1px solid var(--border)';
+    return `
+    <button class="search-btn" style="${buttonStyle}" onclick='applyFreeImageShortcut(${JSON.stringify(template.record_id)})'>${escapeHtml(label)}</button>
+  `;
+  }).join('');
+
+  const templateMaterialsBlock = selectedTemplate
+    ? `<div class="ai-prompt-card">
+        <div class="ai-prompt-label">模板默认素材</div>
+        <div class="ai-status-inline">当前模板：${escapeHtml(selectedTemplate.name || selectedTemplate.shortcut_name || '未命名模板')} · 默认素材 ${selectedTemplateMaterials.length} 项</div>
+        <div class="ai-section-actions" style="margin-top:12px">
+          <button class="search-btn" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)" onclick="applySelectedTemplateDefaultMaterials()" ${freeImageMaterialImporting || !selectedTemplateMaterials.length ? 'disabled' : ''}>${freeImageMaterialImporting ? '读取中…' : '加入全部默认参考图'}</button>
+          <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="clearSelectedFreeImageTemplate()">取消当前模板</button>
+          ${syncedSelectedTemplate ? `<button class="search-btn" style="background:var(--crimson);color:#fff" onclick="deleteSelectedFreeImageTemplate()" ${aiTemplateDeleting ? 'disabled' : ''}>${aiTemplateDeleting ? '删除中…' : '删除模板'}</button>` : ''}
+        </div>
+        ${selectedTemplateMaterials.length
+          ? `<div class="ai-material-grid">${selectedTemplateMaterials.map(material => renderTemplateMaterialCard(material)).join('')}</div>`
+          : `<div class="ai-reference-empty">这个模板暂时还没有绑定默认参考素材。你可以直接上传自己的参考图，或者稍后再到飞书素材库里补充。</div>`
+        }
+      </div>`
+    : '';
+
+  const uploadBlock = uploadedCount
+    ? `<div class="ai-upload-grid">${freeImageUploads.map((upload, index) => renderFreeImageUploadCard(upload, index)).join('')}</div>`
+    : `<div class="ai-reference-empty">当前还没有参考图。你可以直接文生图，也可以上传 1-${ui.freeImageMaxUploadCount} 张图，让模型参考主体、配色、材质或构图方向。</div>`;
+
+  const resultBlock = freeImageResult
+    ? `<div class="ai-result-card"><div class="alert alert-jade" style="margin-bottom:0"><div class="alert-title">生成完成</div><div class="alert-body">模型 ${escapeHtml(freeImageResult.model || '-') } · 参考图 ${Number(freeImageResult.referenceImageCount || 0)} 张 · ${escapeHtml(formatDateTime(freeImageResult.generatedAt || ''))}</div></div><div class="ai-result-preview"><img src="${freeImageResult.imageDataUrl}" alt="自由生图结果"></div><div class="ai-section-actions"><a class="search-btn" style="background:var(--gold);color:#fff;text-decoration:none" href="${freeImageResult.imageDataUrl}" download="ai-generated-${Date.now()}.png">下载图片</a><button class="search-btn" style="background:var(--jade);color:#fff" onclick="openGeneratedMaterialSave('image')" ${aiGeneratedMaterialSaving ? 'disabled' : ''}>添加到模板</button></div>${renderGeneratedMaterialSavePanel('image')}</div>`
+    : '';
+
+  body.innerHTML = `
+    ${alerts.join('')}
+    <div class="panel" style="background:transparent;border:none;box-shadow:none;margin-bottom:0">
+      <div class="panel-header" style="padding:0 0 16px 0">
+        <div class="panel-title"><span class="dot jade"></span>自由生图</div>
+        <span class="panel-badge jade">提示词 + 可选参考图</span>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="ai-status-inline">当前模型：${escapeHtml(ui.modelName)} · ${escapeHtml(templateSourceText)} · 参考图最多 ${ui.freeImageMaxUploadCount} 张</div>
+        <div class="ai-prompt-stack">
+          <div class="ai-prompt-card">
+            <div class="ai-prompt-label">提示词</div>
+            <textarea class="ai-prompt-textarea" placeholder="例如：请生成一张高级感电商海报，主体是一件奶白色 adidas 运动夹克，背景干净，光线柔和，适合社媒封面。" oninput="handleFreeImagePromptInput(event)">${escapeHtml(freeImagePrompt)}</textarea>
+            <div class="ai-shortcut-list">${shortcutButtons}</div>
+          </div>
+          ${templateMaterialsBlock}
+        </div>
+        <div class="ai-section-actions">
+          <label class="search-btn" style="background:var(--surface-elevated);color:var(--text);border:1px solid var(--border)">
+            添加参考图
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple style="display:none" onchange="handleFreeImageUpload(event)">
+          </label>
+          <button class="search-btn" style="background:var(--gold);color:#fff" onclick="submitFreeImageGeneration()" ${shouldDisableGenerate ? 'disabled' : ''}>${freeImageSubmitting ? '生成中…' : '开始生成'}</button>
+          <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="resetFreeImageForm()" ${freeImageSubmitting ? 'disabled' : ''}>重置</button>
+          <span class="ai-status-inline">当前参考图 ${uploadedCount} / ${ui.freeImageMaxUploadCount} 张 · ${escapeHtml(disabledReason || '已就绪，可直接生成。')}</span>
+        </div>
+        ${uploadBlock}
+        ${resultBlock}
+      </div>
+    </div>`;
+}
+
+function renderDewuSection(body) {
+  const ui = getAiUiMeta();
+  const uploadedCount = dewuUploads.filter(Boolean).length;
+  const disabledReason = aiConfigLoading
+    ? '正在读取本地 AI 配置…'
+    : !aiConfig
+      ? 'AI 配置读取失败'
+      : !ui.proxyEnabled
+        ? 'AI 代理未配置'
+        : !ui.hasBaseImage
+          ? '固定底图未配置'
+          : uploadedCount < ui.requiredUploadCount
+            ? `还需上传 ${ui.requiredUploadCount - uploadedCount} 张商品图`
+            : '';
+  const shouldDisableGenerate = dewuSubmitting || !!disabledReason;
+  const alerts = [
+    `<div class="alert ${ui.hasBaseImage ? 'alert-jade' : 'alert-warn'}"><div class="alert-title">固定底图</div><div class="alert-body">${ui.hasBaseImage ? '已配置固定得物报告底图，客服只需上传 3 张商品图。' : '固定底图未就绪。默认会先找 ./assets/dewu-base-report.jpg；如果你放在别处，再用 .env 的 AI_DEWU_BASE_IMAGE_PATH 覆盖。'}</div></div>`,
+    `<div class="alert ${ui.proxyEnabled ? 'alert-info' : 'alert-warn'}"><div class="alert-title">请求链路</div><div class="alert-body">${ui.proxyDescription}</div></div>`,
+    `<div class="alert ${ui.dewuPromptSource === 'feishu-sync' ? 'alert-jade' : 'alert-info'}"><div class="alert-title">提示词来源</div><div class="alert-body">${ui.dewuPromptSource === 'feishu-sync' ? `当前优先使用飞书同步模板：${escapeHtml(ui.dewuPromptTemplateName || '生成得物')}` : '当前使用内置得物提示词；后续运行 npm run refresh 并配置飞书模板后，会自动切到飞书同步版本。'}</div></div>`,
+  ];
+  if (dewuError) {
+    alerts.push(`<div class="alert alert-danger"><div class="alert-title">生成失败</div><div class="alert-body">${escapeHtml(dewuError)}</div></div>`);
+  }
+  const noticeMarkup = getAiNoticeMarkup();
+  if (noticeMarkup) alerts.push(noticeMarkup);
+
+  const resultBlock = dewuResult
+    ? `<div class="ai-result-card"><div class="alert alert-jade" style="margin-bottom:0"><div class="alert-title">生成完成</div><div class="alert-body">模型 ${escapeHtml(dewuResult.model || '-') } · ${escapeHtml(formatDateTime(dewuResult.generatedAt || ''))}</div></div><div class="ai-result-preview"><img src="${dewuResult.imageDataUrl}" alt="生成得物结果"></div><div class="ai-section-actions"><a class="search-btn" style="background:var(--gold);color:#fff;text-decoration:none" href="${dewuResult.imageDataUrl}" download="dewu-generated-${Date.now()}.png">下载图片</a><button class="search-btn" style="background:var(--jade);color:#fff" onclick="openGeneratedMaterialSave('dewu')" ${aiGeneratedMaterialSaving ? 'disabled' : ''}>添加到模板</button></div>${renderGeneratedMaterialSavePanel('dewu')}</div>`
+    : '';
+
+  body.innerHTML = `
+    ${alerts.join('')}
+    <div class="panel" style="background:transparent;border:none;box-shadow:none;margin-bottom:0">
+      <div class="panel-header" style="padding:0 0 16px 0">
+        <div class="panel-title"><span class="dot gold"></span>生成得物</div>
+        <span class="panel-badge amber">固定底图 + ${ui.requiredUploadCount} 张商品图</span>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="ai-status-inline">支持格式：${ui.acceptedMimeText} · 单张建议不超过 ${ui.limitText}</div>
+        <div class="ai-upload-grid">
+          ${dewuUploads.map((upload, index) => renderDewuUploadCard(upload, index)).join('')}
+        </div>
+        <div class="ai-section-actions">
+          <button class="search-btn" style="background:var(--gold);color:#fff" onclick="submitDewuGeneration()" ${shouldDisableGenerate ? 'disabled' : ''}>${dewuSubmitting ? '生成中…' : '开始生成'}</button>
+          <button class="search-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="resetDewuForm()" ${dewuSubmitting ? 'disabled' : ''}>重置</button>
+          <span class="ai-status-inline">${escapeHtml(disabledReason || '已就绪，可直接生成。')}</span>
+        </div>
+        ${resultBlock}
+      </div>
+    </div>`;
+}
+
+function renderAiSection() {
+  const body = document.getElementById('aiToolBody');
+  if (!body) return;
+  renderFreeImageSection(body);
+}
+
+function handleFreeImagePromptInput(event) {
+  freeImagePrompt = String(event?.target?.value || '');
+  persistAiDraftState();
+}
+
+async function handleFreeImageUpload(event) {
+  const files = Array.from(event?.target?.files || []);
+  const maxBytes = aiConfig?.maxFileBytes || 0;
+  const maxCount = Number(aiConfig?.freeImageMaxUploadCount || 6);
+  if (!files.length) return;
+  if (freeImageUploads.length >= maxCount) {
+    freeImageError = `最多上传 ${maxCount} 张参考图。`;
+    renderAiSection();
+    event.target.value = '';
+    return;
+  }
+  const oversizedFile = files.find(file => maxBytes && file.size > maxBytes);
+  if (oversizedFile) {
+    freeImageError = `${oversizedFile.name} 超过 ${getReadableFileSize(maxBytes)}，请压缩后重试。`;
+    renderAiSection();
+    event.target.value = '';
+    return;
+  }
+
+  const availableSlots = Math.max(0, maxCount - freeImageUploads.length);
+  const acceptedFiles = files.slice(0, availableSlots);
+  try {
+    const nextUploads = await Promise.all(acceptedFiles.map(readFileAsDataUrl));
+    freeImageUploads = [...freeImageUploads, ...nextUploads];
+    freeImageResult = null;
+    if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+    freeImageError = files.length > availableSlots ? `最多上传 ${maxCount} 张参考图，已保留前 ${availableSlots} 张。` : '';
+  } catch {
+    freeImageError = '参考图读取失败，请重新选择。';
+  } finally {
+    renderAiSection();
+    event.target.value = '';
+  }
+}
+
+function clearFreeImageUpload(index) {
+  freeImageUploads = freeImageUploads.filter((_, itemIndex) => itemIndex !== index);
+  freeImageError = '';
+  freeImageResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+  renderAiSection();
+}
+
+function resetFreeImageForm() {
+  freeImagePrompt = '';
+  freeImageUploads = [];
+  freeImageSubmitting = false;
+  freeImageResult = null;
+  freeImageError = '';
+  selectedFreeTemplateId = null;
+  freeImageMaterialImporting = false;
+  if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+  persistAiDraftState();
+  renderAiSection();
+}
+
+function clearSelectedFreeImageTemplate() {
+  selectedFreeTemplateId = null;
+  freeImageError = '';
+  freeImageResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+  persistAiDraftState();
+  renderAiSection();
+}
+
+function applyFreeImageShortcut(templateId) {
+  const template = getFreeTemplateById(templateId);
+  if (!template) return;
+  selectedFreeTemplateId = template.record_id;
+  freeImagePrompt = template.prompt || '';
+  freeImageError = '';
+  freeImageResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+  persistAiDraftState();
+  renderAiSection();
+}
+
+async function appendTemplateMaterialsToFreeImage(materials) {
+  const maxCount = Number(aiConfig?.freeImageMaxUploadCount || 6);
+  const validMaterials = (materials || []).filter(Boolean);
+  if (!validMaterials.length) {
+    freeImageError = '当前模板还没有默认参考素材。';
+    renderAiSection();
+    return;
+  }
+  if (freeImageUploads.length >= maxCount) {
+    freeImageError = `最多上传 ${maxCount} 张参考图。`;
+    renderAiSection();
+    return;
+  }
+
+  const existingTokens = new Set(freeImageUploads.map(upload => upload.attachmentToken).filter(Boolean));
+  const existingUrls = new Set(freeImageUploads.map(upload => upload.sourceUrl).filter(Boolean));
+  const candidates = [];
+
+  validMaterials.forEach(material => {
+    (material.attachments || []).forEach(attachment => {
+      if (!attachment?.local_url) return;
+      if (attachment.file_token && existingTokens.has(attachment.file_token)) return;
+      if (attachment.local_url && existingUrls.has(attachment.local_url)) return;
+      candidates.push({ material, attachment });
+    });
+  });
+
+  if (!candidates.length) {
+    freeImageError = '这些默认素材已经都在当前参考图列表里了。';
+    renderAiSection();
+    return;
+  }
+
+  const availableSlots = Math.max(0, maxCount - freeImageUploads.length);
+  const acceptedItems = candidates.slice(0, availableSlots);
+
+  freeImageMaterialImporting = true;
+  freeImageError = '';
+  renderAiSection();
+
+  try {
+    const uploads = [];
+    for (const item of acceptedItems) {
+      const upload = await loadAssetUrlAsUpload(item.attachment.local_url, item.attachment.name, {
+        source: 'feishu-material',
+        materialId: item.material.record_id,
+        materialName: item.material.name,
+        attachmentToken: item.attachment.file_token,
+        sourceUrl: item.attachment.local_url,
+      });
+      uploads.push(upload);
+    }
+    freeImageUploads = [...freeImageUploads, ...uploads];
+    freeImageResult = null;
+    freeImageError = candidates.length > acceptedItems.length
+      ? `最多上传 ${maxCount} 张参考图，已优先加入前 ${acceptedItems.length} 张默认素材。`
+      : '';
+  } catch (e) {
+    freeImageError = e instanceof Error ? e.message : '默认素材读取失败，请先重新执行 npm run refresh。';
+  } finally {
+    freeImageMaterialImporting = false;
+    renderAiSection();
+  }
+}
+
+async function applySelectedTemplateDefaultMaterials() {
+  await appendTemplateMaterialsToFreeImage(getSelectedTemplateMaterials());
+}
+
+async function addDefaultMaterialToFreeImage(materialId) {
+  const material = getAiMaterialsMap().get(materialId);
+  await appendTemplateMaterialsToFreeImage(material ? [material] : []);
+}
+
+function handleDewuUpload(event, index) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const maxBytes = aiConfig?.maxFileBytes || 0;
+  if (maxBytes && file.size > maxBytes) {
+    dewuError = `商品图 ${index + 1} 超过 ${getReadableFileSize(maxBytes)}，请压缩后重试。`;
+    renderAiSection();
+    event.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    dewuUploads[index] = {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: String(reader.result || ''),
+    };
+    dewuError = '';
+    dewuResult = null;
+    if (aiGeneratedMaterialDraft?.source === 'dewu') aiGeneratedMaterialDraft = null;
+    renderAiSection();
+  };
+  reader.onerror = () => {
+    dewuError = `商品图 ${index + 1} 读取失败，请重新选择。`;
+    renderAiSection();
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function clearDewuUpload(index) {
+  dewuUploads[index] = null;
+  dewuError = '';
+  dewuResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'dewu') aiGeneratedMaterialDraft = null;
+  renderAiSection();
+}
+
+function resetDewuForm() {
+  dewuUploads = Array.from({ length: 3 }, () => null);
+  dewuSubmitting = false;
+  dewuResult = null;
+  dewuError = '';
+  if (aiGeneratedMaterialDraft?.source === 'dewu') aiGeneratedMaterialDraft = null;
+  renderAiSection();
+}
+
+async function submitDewuGeneration() {
+  if (dewuSubmitting) return;
+  const requiredUploadCount = Number(aiConfig?.requiredUploadCount || 3);
+  if (!aiConfig?.baseImageReady) {
+    dewuError = '固定底图未配置，请先检查本地 .env。';
+    renderAiSection();
+    return;
+  }
+  if (dewuUploads.some(upload => !upload)) {
+    dewuError = `请先上传 ${requiredUploadCount} 张商品图。`;
+    renderAiSection();
+    return;
+  }
+
+  dewuSubmitting = true;
+  dewuError = '';
+  dewuResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'dewu') aiGeneratedMaterialDraft = null;
+  renderAiSection();
+
+  try {
+    const resp = await fetch('/api/ai/dewu/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images: dewuUploads.map(upload => upload.dataUrl) }),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok || !payload.ok || !payload.imageDataUrl) {
+      throw new Error(payload.error || '生成失败，请稍后重试。');
+    }
+    dewuResult = payload;
+  } catch (e) {
+    dewuError = e instanceof Error ? e.message : '生成失败，请稍后重试。';
+  } finally {
+    dewuSubmitting = false;
+    renderAiSection();
+  }
+}
+
+async function submitFreeImageGeneration() {
+  if (freeImageSubmitting) return;
+  const prompt = freeImagePrompt.trim();
+  if (!prompt) {
+    freeImageError = '请先输入提示词。';
+    renderAiSection();
+    return;
+  }
+
+  freeImageSubmitting = true;
+  freeImageError = '';
+  freeImageResult = null;
+  if (aiGeneratedMaterialDraft?.source === 'image') aiGeneratedMaterialDraft = null;
+  renderAiSection();
+
+  try {
+    const resp = await fetch('/api/ai/image/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        images: freeImageUploads.map(upload => upload.dataUrl),
+      }),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok || !payload.ok || !payload.imageDataUrl) {
+      throw new Error(payload.error || '生成失败，请稍后重试。');
+    }
+    freeImageResult = payload;
+  } catch (e) {
+    freeImageError = e instanceof Error ? e.message : '生成失败，请稍后重试。';
+  } finally {
+    freeImageSubmitting = false;
+    renderAiSection();
+  }
+}
+
+function renderWeeklyMeetingSection() {
+  const title = document.querySelector('#sec-action .panel-title');
+  const badge = document.querySelector('#sec-action .panel-badge');
+  const actionBody = document.getElementById('actionListBody');
+  const riskBody = document.getElementById('riskAlertsBody');
+  const checkBody = document.getElementById('opportunityAlertsBody');
+
+  if (!meetingSummaryData) {
+    title.innerHTML = '<span class="dot gold"></span>本周会议纪要';
+    badge.textContent = 'meeting_summary.json';
+    actionBody.innerHTML = '<div class="alert alert-warn"><div class="alert-title">本周会议纪要未准备</div><div class="alert-body">请更新 meeting_summary.json 后刷新页面。</div></div>';
+    riskBody.innerHTML = '<div class="alert alert-info"><div class="alert-title">暂无风险项</div><div class="alert-body">当前没有可展示的会议风险内容。</div></div>';
+    checkBody.innerHTML = '<div class="alert alert-info"><div class="alert-title">暂无考察项</div><div class="alert-body">当前没有可展示的下次会议考察项。</div></div>';
+    return;
+  }
+
+  const summary = meetingSummaryData;
+  title.innerHTML = '<span class="dot gold"></span>' + summary.meeting_title;
+  badge.textContent = summary.badge;
+
+  const summaryBlocks = (summary.summary || []).map((item, idx) => `<div class="action-item"><div class="action-num ${idx === 0 ? 'p1' : idx === 1 ? 'p2' : 'p3'}">${String(idx + 1).padStart(2, '0')}</div><div><div class="action-title">会议重点 ${idx + 1}</div><div class="action-desc">${item}</div></div></div>`).join('');
+  const nextWeekBlocks = (summary.next_week_actions || []).map((item, idx) => `<div class="action-item"><div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div><div><div class="action-title">下周动作</div><div class="action-desc">${item}</div></div></div>`).join('');
+  const employeeBlocks = (summary.employee_tasks || []).map(person => `<div class="emp-card"><div class="emp-card-header"><div class="emp-name">${person.owner}</div><span class="emp-load med">本周跟进</span></div><div style="font-size:13px;color:var(--text-mid);margin-bottom:12px">${person.goal}</div><div class="action-desc">${(person.tasks || []).map(task => `• ${task}`).join('<br>')}</div></div>`).join('');
+
+  actionBody.innerHTML = `${summaryBlocks}<div style="height:24px"></div><div class="panel" style="background:transparent;border:none;padding:0"><div class="panel-header" style="padding:0 0 16px 0"><div class="panel-title"><span class="dot jade"></span>下周重点动作</div></div><div class="panel-body" style="padding:0">${nextWeekBlocks}</div></div><div style="height:24px"></div><div class="panel" style="background:transparent;border:none;padding:0"><div class="panel-header" style="padding:0 0 16px 0"><div class="panel-title"><span class="dot steel"></span>个人任务</div></div><div class="panel-body" style="padding:0"><div class="emp-cards">${employeeBlocks}</div></div></div>`;
+  riskBody.innerHTML = (summary.risks || []).map(item => `<div class="alert alert-${item.level}" style="margin-bottom:12px"><div class="alert-title">${item.title}</div><div class="alert-body">${item.body}</div></div>`).join('') || '<div class="alert alert-info"><div class="alert-title">暂无风险项</div><div class="alert-body">当前没有可展示的会议风险内容。</div></div>';
+  checkBody.innerHTML = (summary.next_meeting_checks || []).map(item => `<div class="alert alert-info" style="margin-bottom:12px"><div class="alert-title">下次会议重点考察</div><div class="alert-body">${item}</div></div>`).join('') || '<div class="alert alert-info"><div class="alert-title">暂无考察项</div><div class="alert-body">当前没有可展示的下次会议考察项。</div></div>';
 }
 
 function renderCustomerSections() {
@@ -1620,66 +3368,58 @@ function renderCustomerSections() {
 
   const customerBuckets = {
     all: customers,
-    '进入斩杀线': customers.filter(c => c.strike_window_status === '进入斩杀线'),
-    '召回期': customers.filter(c => c.strike_window_status === '召回期'),
+    '可触达': customers.filter(c => c.strike_window_status === '可触达'),
+    '已超窗': customers.filter(c => c.strike_window_status === '已超窗' || c.strike_window_status === '沉睡'),
     'Risk': customers.filter(c => c.priority_tier === 'Risk'),
     'BirthdayNear': customers.filter(c => c.birthday_is_near),
     'P0P1': customers.filter(c => c.priority_tier === 'P0' || c.priority_tier === 'P1'),
+    'WechatAsset': customers.filter(c => c.has_wechat_asset),
   };
 
   const filteredCustomers = customerBuckets[customerFilterMode] || customers;
   let sortedCustomers = sortDataTableItems(filteredCustomers, 'customerPriority');
-  if (customerFilterMode === 'BirthdayNear' && dataTableSortState.customerPriority.field === 'priority_score') {
+  if (customerFilterMode === 'BirthdayNear' && (dataTableSortState.customerPriority.field === 'priority_score' || dataTableSortState.customerPriority.field === 'priority_score_with_wechat')) {
     sortedCustomers = [...sortedCustomers].sort((a, b) => {
       const da = a.birthday_days_until ?? 999;
       const db = b.birthday_days_until ?? 999;
       if (da !== db) return da - db;
-      return (b.priority_score || 0) - (a.priority_score || 0);
+      return (b.priority_score_with_wechat || b.priority_score || 0) - (a.priority_score_with_wechat || a.priority_score || 0);
     });
   }
   const priorityBody = document.getElementById('customerPriorityBody');
   priorityBody.innerHTML = sortedCustomers.slice(0, customerVisibleCount).map(c => `<tr onclick="selectedCustomerKey='${c.customer_key}'; customerHistoryVisibleCount = 20; renderCustomerHistory()" style="cursor:pointer">
-    <td style="font-weight:600">${c.customer_name || '-'}${c.birthday_is_near ? ` <span class="tag tag-warn">生日 ${c.birthday_month_day || ''}</span>` : ''}${(c.birthday_style_preferences || []).length ? `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">偏好：${c.birthday_style_preferences.slice(0,3).join(' / ')}</div>` : ''}</td>
+    <td style="font-weight:600">${c.customer_name || '-'}${c.birthday_is_near ? ` <span class="tag tag-warn">生日 ${c.birthday_month_day || ''}</span>` : ''}${c.has_wechat_asset ? ` <span class="tag tag-ok">微信${formatSignedScore(c.wechat_asset_boost)}</span>` : ''}${(c.birthday_style_preferences || []).length ? `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">偏好：${c.birthday_style_preferences.slice(0,3).join(' / ')}</div>` : ''}</td>
     <td>${c.employee || '-'}</td>
-    <td style="font-family:var(--mono)">${c.priority_score ?? '-'}</td>
+    <td>${renderWechatScoreCell(c)}</td>
+    <td>${renderWechatBoostCell(c)}</td>
+    <td>${renderWechatAssetCell(c)}</td>
     <td><span class="tag ${c.priority_tier === 'P0' ? 'tag-danger' : c.priority_tier === 'P1' ? 'tag-ok' : c.priority_tier === 'P2' ? 'tag-warn' : 'tag-steel'}">${c.priority_tier}</span></td>
-    <td><span class="tag ${c.strike_window_status === '进入斩杀线' ? 'tag-ok' : c.strike_window_status === '观察期' ? 'tag-warn' : c.strike_window_status === '召回期' ? 'tag-steel' : 'tag-danger'}">${c.strike_window_status || '-'}</span></td>
+    <td><span class="tag ${c.strike_window_status === '可触达' ? 'tag-ok' : c.strike_window_status === '已超窗' ? 'tag-warn' : c.strike_window_status === '沉睡' ? 'tag-steel' : c.strike_window_status === '冷却期' ? 'tag-danger' : 'tag-steel'}">${c.strike_window_status || '-'}</span></td>
     <td style="font-family:var(--mono)">${c.birthday_month_day || '-'}${c.birthday_days_until != null ? ` / ${c.birthday_days_until}天` : ''}</td>
-    <td style="font-family:var(--mono)">¥${(c.revenue_180d || 0).toLocaleString()}</td>
+    <td style="font-family:var(--mono)">¥${(c.revenue_365d || 0).toLocaleString()}</td>
+    <td style="font-family:var(--mono)">¥${(c.revenue_all || 0).toLocaleString()}</td>
     <td style="font-family:var(--mono)">${c.last_order_date || '-'} / ${c.days_since_last_order ?? '-'}天</td>
+    <td>${c.display_last_selling_platform || '-'}</td>
     <td>${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join('<br>') || '-'}</td>
-    <td>${(c.recommended_skus || []).slice(0,2).join(' / ') || '-'}</td>
+    <td>${renderRecommendationBlock(c)}</td>
   </tr>`).join('');
   updateDataTableArrows('customerPriority');
   document.getElementById('customerMoreBtn').style.display = sortedCustomers.length > customerVisibleCount ? 'inline-flex' : 'none';
   document.getElementById('customerFilterAll').style.background = customerFilterMode === 'all' ? 'var(--surface-elevated)' : 'var(--surface)';
-  document.getElementById('customerFilterReady').style.background = customerFilterMode === '进入斩杀线' ? 'var(--surface-elevated)' : 'var(--surface)';
-  document.getElementById('customerFilterRecall').style.background = customerFilterMode === '召回期' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterReady').style.background = customerFilterMode === '可触达' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterRecall').style.background = customerFilterMode === '已超窗' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterRisk').style.background = customerFilterMode === 'Risk' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterBirthday').style.background = customerFilterMode === 'BirthdayNear' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterP0P1').style.background = customerFilterMode === 'P0P1' ? 'var(--surface-elevated)' : 'var(--surface)';
+  document.getElementById('customerFilterWechatAsset').style.background = customerFilterMode === 'WechatAsset' ? 'var(--surface-elevated)' : 'var(--surface)';
   document.getElementById('customerFilterAll').textContent = `全部（${customerBuckets.all.length}）`;
-  document.getElementById('customerFilterReady').textContent = `进入斩杀线（${customerBuckets['进入斩杀线'].length}）`;
-  document.getElementById('customerFilterRecall').textContent = `召回期（${customerBuckets['召回期'].length}）`;
+  document.getElementById('customerFilterReady').textContent = `可触达（${customerBuckets['可触达'].length}）`;
+  document.getElementById('customerFilterRecall').textContent = `已超窗（${customerBuckets['已超窗'].length}）`;
   document.getElementById('customerFilterRisk').textContent = `风险观察（${customerBuckets['Risk'].length}）`;
   document.getElementById('customerFilterBirthday').textContent = `生日临近（${customerBuckets['BirthdayNear'].length}）`;
   document.getElementById('customerFilterP0P1').textContent = `P0/P1（${customerBuckets['P0P1'].length}）`;
+  document.getElementById('customerFilterWechatAsset').textContent = `微信资产（${customerBuckets.WechatAsset.length}）`;
   if (selectedCustomerKey) renderCustomerHistory();
-
-  const actions = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 4);
-  document.getElementById('actionListBody').innerHTML = actions.map((c, idx) => `<div class="action-item">
-    <div class="action-num ${idx < 2 ? 'p1' : 'p2'}">${String(idx + 1).padStart(2, '0')}</div>
-    <div>
-      <div class="action-title">联系 ${c.customer_name || '客户'} · ${c.priority_tier}</div>
-      <div class="action-desc">负责人：${c.employee || '-'} · 节奏：${c.platform_cadence_bucket || '-'} · 斩杀线：${c.strike_window_status || '-'}${c.birthday_is_near ? ` · 生日 ${c.birthday_month_day || ''}` : ''} · 上次下单：${formatDateTime(c.last_order_date)} · 最近三单：${(c.recent_orders || []).map(o => `${formatDateTime(o.date)} ${o.platform || '-'} ${o.sku || '-'}`).join(' ｜ ') || '-'} · 推荐：${(c.recommended_skus || []).join(' / ') || '暂无'} · ${c.action_reason || ''}</div>
-    </div>
-  </div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无可执行加推动作</div><div class="alert-body">当前客户分层没有 P0 / P1 名单。</div></div>';
-
-  const riskCustomers = customers.filter(c => c.priority_tier === 'Risk').slice(0, 3);
-  document.getElementById('riskAlertsBody').innerHTML = riskCustomers.map(c => `<div class="alert alert-danger" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · 风险观察</div><div class="alert-body">负责人：${c.employee || '-'} · 近90天退货 ${c.return_orders_90d || 0} 次 · 180天退货率 ${c.return_rate_180d || 0}%</div></div>`).join('') || '<div class="alert alert-jade"><div class="alert-title">暂无风险样本</div><div class="alert-body">当前没有风险观察客户。</div></div>';
-
-  const opportunities = customers.filter(c => c.priority_tier === 'P1' || c.priority_tier === 'P0').slice(0, 3);
-  document.getElementById('opportunityAlertsBody').innerHTML = opportunities.map(c => `<div class="alert alert-jade" style="margin-bottom:12px"><div class="alert-title">${c.customer_name || '客户'} · ${c.priority_tier}</div><div class="alert-body">平台：${c.platform || '-'} · 推荐：${(c.recommended_skus || []).slice(0, 2).join(' / ') || '暂无'} · ${c.action_reason || ''}</div></div>`).join('') || '<div class="alert alert-warn"><div class="alert-title">暂无机会样本</div><div class="alert-body">当前没有高优先客户。</div></div>';
 }
 
 function loadStaticCharts(sec) {
@@ -1718,20 +3458,6 @@ function loadStaticCharts(sec) {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { position: 'top', align: 'end' } },
         scales: { y: { beginAtZero: true, grid: { color: 'rgba(42,42,46,0.6)' } }, x: { grid: { display: false } } }
-      }
-    });
-  }
-  if (sec === 'customer' && !window._custChart && customerActionData) {
-    const summary = customerActionData.summary || {};
-    window._custChart = new Chart(document.getElementById('customerPieChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['今日优先', '可加推', '可召回', '风险观察'],
-        datasets: [{ data: [summary.p0_today || 0, summary.p1_upsell || 0, summary.p2_recall || 0, summary.risk_watch || 0], backgroundColor: ['#c96a2b', '#7b8b5a', '#d38a2c', '#a94a3b'], borderWidth: 2, borderColor: '#fff8ed', hoverOffset: 10 }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '60%',
-        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
