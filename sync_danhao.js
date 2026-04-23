@@ -18,6 +18,9 @@ const CONFIG_PATH = process.env.SOURCES_CONFIG_PATH
   ? path.resolve(ROOT, process.env.SOURCES_CONFIG_PATH)
   : path.join(ROOT, 'config', 'sources.local.json');
 const OUTPUT_DIR = ROOT;
+const AI_ASSETS_OUTPUT_FILE = path.join(OUTPUT_DIR, 'ai_assets.json');
+const AI_ASSETS_TMP_FILE = path.join(OUTPUT_DIR, 'ai_assets.tmp.json');
+const AI_MATERIAL_CACHE_DIR = path.join(OUTPUT_DIR, 'output', 'ai-materials');
 const LARK_CLI = process.env.LARK_CLI_BIN || 'lark-cli';
 const LIMIT = Number.isFinite(Number(process.env.LARK_SYNC_LIMIT)) ? Number(process.env.LARK_SYNC_LIMIT) : 200;
 
@@ -64,6 +67,19 @@ function buildSource(sourceConfig, fallbackLabel, outputName) {
   };
 }
 
+function buildOptionalSource(sourceConfig, fallbackLabel) {
+  if (!sourceConfig || typeof sourceConfig !== 'object') return null;
+  const baseToken = sourceConfig.baseToken ? String(sourceConfig.baseToken).trim() : '';
+  const tableId = sourceConfig.tableId ? String(sourceConfig.tableId).trim() : '';
+  if (!baseToken || !tableId) return null;
+  return {
+    label: sourceConfig.label || fallbackLabel,
+    baseToken,
+    tableId,
+    viewId: sourceConfig.viewId ? String(sourceConfig.viewId).trim() : null,
+  };
+}
+
 function loadSyncConfig() {
   if (!fs.existsSync(CONFIG_PATH)) {
     throw new Error(
@@ -83,6 +99,8 @@ function loadSyncConfig() {
     riskSource: buildSource(sources.risk, '单号查询/售后风险30天视图', 'orders_risk.json'),
     birthdaySource: buildSource(sources.birthday, '单号查询/会员生日', 'birthday_members.json'),
     dutySource: buildSource(sources.duty, '单号查询/值班表', 'duty_schedule.json'),
+    aiPromptSource: buildOptionalSource(sources.aiPrompts, 'AI 提示词模板库'),
+    aiMaterialSource: buildOptionalSource(sources.aiMaterials, 'AI 素材库'),
   };
 }
 
@@ -93,6 +111,8 @@ const {
   riskSource: RISK_SOURCE,
   birthdaySource: BIRTHDAY_SOURCE,
   dutySource: DUTY_SOURCE,
+  aiPromptSource: AI_PROMPT_SOURCE,
+  aiMaterialSource: AI_MATERIAL_SOURCE,
 } = loadSyncConfig();
 
 function parseCliJson(output) {
@@ -149,6 +169,142 @@ function numberValue(...values) {
     if (!Number.isNaN(num)) return num;
   }
   return null;
+}
+
+function booleanValue(value) {
+  if (typeof value === 'boolean') return value;
+  const raw = text(value);
+  if (!raw) return false;
+  const normalized = raw.toLowerCase();
+  if (['true', '1', 'yes', 'y', 'on', '是', '启用', '已启用'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'n', 'off', '否', '停用', '已停用'].includes(normalized)) return false;
+  return Boolean(normalized);
+}
+
+function uniqueStrings(values) {
+  return Array.from(new Set((values || []).filter(Boolean)));
+}
+
+function splitTextList(value) {
+  const raw = text(value);
+  if (!raw) return [];
+  return uniqueStrings(
+    raw
+      .split(/[,\n，、]/)
+      .map(item => item.trim())
+      .filter(Boolean),
+  );
+}
+
+function arrayTextList(value) {
+  if (value == null) return [];
+  if (Array.isArray(value)) {
+    return uniqueStrings(value.flatMap(item => {
+      if (item == null) return [];
+      if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+        return splitTextList(String(item));
+      }
+      if (typeof item === 'object') {
+        if (item.name) return splitTextList(item.name);
+        if (item.text) return splitTextList(item.text);
+      }
+      return [];
+    }));
+  }
+  return splitTextList(value);
+}
+
+function linkedRecordIds(value) {
+  if (!Array.isArray(value)) return [];
+  return uniqueStrings(value.map(item => {
+    if (!item) return null;
+    if (typeof item === 'string') return item.trim();
+    if (typeof item === 'object' && item.id) return String(item.id).trim();
+    return null;
+  }));
+}
+
+function attachmentList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(item => {
+      if (!item || typeof item !== 'object' || !item.file_token) return null;
+      return {
+        file_token: String(item.file_token).trim(),
+        name: text(item.name) || 'attachment',
+      };
+    })
+    .filter(item => item && item.file_token);
+}
+
+function compareBySortAndName(a, b) {
+  const sortDiff = (a.sort ?? Number.MAX_SAFE_INTEGER) - (b.sort ?? Number.MAX_SAFE_INTEGER);
+  if (sortDiff !== 0) return sortDiff;
+  return String(a.name || '').localeCompare(String(b.name || ''), 'zh-CN');
+}
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function removeIfExists(targetPath) {
+  if (!targetPath || !fs.existsSync(targetPath)) return;
+  fs.rmSync(targetPath, { recursive: true, force: true });
+}
+
+function sanitizePathSegment(value, fallback = 'file') {
+  const normalized = String(value || '')
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return normalized || fallback;
+}
+
+function relativeWebPath(filePath) {
+  return '/' + path.relative(ROOT, filePath).split(path.sep).join('/');
+}
+
+function downloadAttachmentToCache(attachment) {
+  ensureDir(AI_MATERIAL_CACHE_DIR);
+  const ext = path.extname(attachment.name || '').toLowerCase();
+  const safeExt = ext || '.bin';
+  const safeBase = sanitizePathSegment(path.basename(attachment.name || 'attachment', ext), 'attachment');
+  const safeToken = sanitizePathSegment(attachment.file_token, 'file-token');
+  const fileName = `${safeToken}-${safeBase}${safeExt}`;
+  const absolutePath = path.join(AI_MATERIAL_CACHE_DIR, fileName);
+  const relativeOutputPath = `./${path.relative(ROOT, absolutePath).split(path.sep).join('/')}`;
+
+  if (!fs.existsSync(absolutePath)) {
+    console.log(`  下载素材附件: ${attachment.name} -> ${relativeOutputPath}`);
+    const command = `LARK_CLI_NO_PROXY=1 "${LARK_CLI}" docs +media-download --token "${attachment.file_token}" --output "${relativeOutputPath}" --profile "${PROFILE}"`;
+    execSync(command, {
+      encoding: 'utf8',
+      timeout: 120000,
+      cwd: ROOT,
+      env: { ...process.env, LARK_CLI_NO_PROXY: '1' },
+    });
+  }
+
+  return {
+    ...attachment,
+    local_path: path.relative(ROOT, absolutePath).split(path.sep).join('/'),
+    local_url: relativeWebPath(absolutePath),
+  };
+}
+
+function cleanupMaterialCache(expectedFiles) {
+  if (!fs.existsSync(AI_MATERIAL_CACHE_DIR)) return;
+  for (const entry of fs.readdirSync(AI_MATERIAL_CACHE_DIR, { withFileTypes: true })) {
+    const absolutePath = path.join(AI_MATERIAL_CACHE_DIR, entry.name);
+    if (entry.isDirectory()) {
+      fs.rmSync(absolutePath, { recursive: true, force: true });
+      continue;
+    }
+    if (!expectedFiles.has(absolutePath)) {
+      fs.unlinkSync(absolutePath);
+    }
+  }
 }
 
 function mapOrderRecord(fields, row, recordId) {
@@ -236,6 +392,56 @@ function mapDutyRecord(fields, row, recordId) {
   };
 }
 
+function mapAiPromptRecord(fields, row, recordId) {
+  const raw = {};
+  fields.forEach((fieldName, idx) => {
+    raw[fieldName] = row[idx];
+  });
+
+  const categories = arrayTextList(raw['分类']);
+  const tools = arrayTextList(raw['适用工具']);
+
+  return {
+    record_id: recordId,
+    name: text(raw['模板名']) || text(raw['快捷按钮名']),
+    shortcut_name: text(raw['快捷按钮名']) || text(raw['模板名']),
+    category: categories[0] || null,
+    categories,
+    tags: splitTextList(raw['标签']),
+    default_material_ids: linkedRecordIds(raw['默认参考素材']),
+    tools,
+    prompt: text(raw['提示词正文']),
+    note: text(raw['补充说明']),
+    sort: numberValue(raw['排序']) ?? Number.MAX_SAFE_INTEGER,
+    enabled: booleanValue(raw['是否启用']),
+    updated_at: text(raw['更新时间']),
+  };
+}
+
+function mapAiMaterialRecord(fields, row, recordId) {
+  const raw = {};
+  fields.forEach((fieldName, idx) => {
+    raw[fieldName] = row[idx];
+  });
+
+  const materialTypes = arrayTextList(raw['素材类型']);
+
+  return {
+    record_id: recordId,
+    name: text(raw['素材名']),
+    material_type: materialTypes[0] || null,
+    material_types: materialTypes,
+    linked_template_ids: linkedRecordIds(raw['关联模板']),
+    tags: splitTextList(raw['标签']),
+    attachments: attachmentList(raw['素材附件']),
+    description: text(raw['素材说明']),
+    sort: numberValue(raw['排序']) ?? Number.MAX_SAFE_INTEGER,
+    categories: splitTextList(raw['适用品类']),
+    updated_at: text(raw['更新时间']),
+    enabled: booleanValue(raw['是否启用']),
+  };
+}
+
 function fetchPage(source, offset) {
   const viewPart = source.viewId ? ` --view-id "${source.viewId}"` : '';
   const command = `LARK_CLI_NO_PROXY=1 "${LARK_CLI}" base "+record-list" --base-token "${source.baseToken}" --table-id "${source.tableId}"${viewPart} --profile "${PROFILE}" --limit ${LIMIT} --offset ${offset}`;
@@ -268,6 +474,14 @@ function isDisplayableBirthday(record) {
 
 function isDisplayableDuty(record) {
   return !!(record.employee && record.duty_date);
+}
+
+function isDisplayableAiPrompt(record) {
+  return !!(text(record.name) || text(record.prompt));
+}
+
+function isDisplayableAiMaterial(record) {
+  return !!(text(record.name) || (record.attachments || []).length);
 }
 
 function syncSource(source, mapper, filterFn) {
@@ -304,6 +518,55 @@ function syncSource(source, mapper, filterFn) {
     synced_at: new Date().toISOString(),
     total_records: filteredRecords.length,
     records: filteredRecords,
+  };
+}
+
+function syncOptionalSource(source, mapper, filterFn) {
+  if (!source) {
+    return {
+      synced_at: new Date().toISOString(),
+      total_records: 0,
+      records: [],
+    };
+  }
+  return syncSource(source, mapper, filterFn);
+}
+
+function hydrateMaterialAssets(materials) {
+  const expectedFiles = new Set();
+  const hydrated = materials.map(material => {
+    const attachments = (material.attachments || []).map(attachment => {
+      try {
+        const downloaded = downloadAttachmentToCache(attachment);
+        const absolutePath = path.join(ROOT, downloaded.local_path);
+        expectedFiles.add(absolutePath);
+        return downloaded;
+      } catch (error) {
+        console.warn(`  ⚠️ 素材下载失败: ${material.name || material.record_id} / ${attachment.name} -> ${error.message}`);
+        return {
+          ...attachment,
+          local_path: null,
+          local_url: null,
+        };
+      }
+    });
+
+    return {
+      ...material,
+      attachments,
+      preview_url: attachments.find(item => item.local_url)?.local_url || null,
+    };
+  });
+
+  cleanupMaterialCache(expectedFiles);
+  return hydrated;
+}
+
+function buildAiAssets(prompts, materials) {
+  return {
+    synced_at: new Date().toISOString(),
+    prompts: [...prompts].sort(compareBySortAndName),
+    materials: hydrateMaterialAssets([...materials].sort(compareBySortAndName)),
   };
 }
 
@@ -389,7 +652,24 @@ function mergeRealtimeRecords(realtimeRecords, historicalRecords) {
   return merged;
 }
 
-function main() {
+function syncAiAssetsOnly() {
+  if (!AI_PROMPT_SOURCE && !AI_MATERIAL_SOURCE) {
+    removeIfExists(AI_ASSETS_OUTPUT_FILE);
+    removeIfExists(AI_ASSETS_TMP_FILE);
+    removeIfExists(AI_MATERIAL_CACHE_DIR);
+    console.log('ℹ️ 未配置 AI 提示词/素材源，跳过 ai_assets.json 生成。');
+    return null;
+  }
+
+  const aiPromptData = syncOptionalSource(AI_PROMPT_SOURCE, mapAiPromptRecord, isDisplayableAiPrompt);
+  const aiMaterialData = syncOptionalSource(AI_MATERIAL_SOURCE, mapAiMaterialRecord, isDisplayableAiMaterial);
+  const aiAssets = buildAiAssets(aiPromptData.records, aiMaterialData.records);
+  writeJsonAtomically(AI_ASSETS_OUTPUT_FILE, AI_ASSETS_TMP_FILE, aiAssets);
+  console.log(`✅ AI 模板缓存完成: 模板 ${aiAssets.prompts.length} 条, 素材 ${aiAssets.materials.length} 条 -> ${AI_ASSETS_OUTPUT_FILE}`);
+  return aiAssets;
+}
+
+function syncAllSources() {
   const fullData = syncSource(FULL_SOURCE, mapOrderRecord, isDisplayableOrder);
   writeJsonAtomically(FULL_SOURCE.outputFile, FULL_SOURCE.tmpFile, fullData);
   console.log(`✅ 全量缓存完成: ${fullData.total_records} 条 -> ${FULL_SOURCE.outputFile}`);
@@ -418,6 +698,17 @@ function main() {
   const dutyData = syncSource(DUTY_SOURCE, mapDutyRecord, isDisplayableDuty);
   writeJsonAtomically(DUTY_SOURCE.outputFile, DUTY_SOURCE.tmpFile, dutyData);
   console.log(`✅ 值班表缓存完成: ${dutyData.total_records} 条 -> ${DUTY_SOURCE.outputFile}`);
+
+  syncAiAssetsOnly();
+}
+
+function main() {
+  const onlyAi = process.argv.includes('--only-ai');
+  if (onlyAi) {
+    syncAiAssetsOnly();
+    return;
+  }
+  syncAllSources();
 }
 
 main();

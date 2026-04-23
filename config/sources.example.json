@@ -30,6 +30,18 @@
       "baseToken": "replace-with-your-base-token",
       "tableId": "replace-with-your-table-id",
       "viewId": "replace-with-your-view-id"
+    },
+    "aiPrompts": {
+      "label": "AI 提示词模板库",
+      "baseToken": "replace-with-your-ai-base-token",
+      "tableId": "replace-with-your-ai-prompt-table-id",
+      "viewId": null
+    },
+    "aiMaterials": {
+      "label": "AI 素材库",
+      "baseToken": "replace-with-your-ai-base-token",
+      "tableId": "replace-with-your-ai-material-table-id",
+      "viewId": null
     }
   }
 }

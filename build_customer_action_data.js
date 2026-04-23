@@ -10,6 +10,8 @@ const INPUT_FILE = path.join(ROOT, 'orders_realtime.json');
 const BIRTHDAY_FILE = path.join(ROOT, 'birthday_members.json');
 const OUTPUT_FILE = path.join(ROOT, 'customer_action_data.json');
 const TMP_FILE = path.join(ROOT, 'customer_action_data.tmp.json');
+const DEFAULT_WECHAT_ASSET_SCORE_FILE = '/Volumes/GPFS/Users/a1234/Desktop/Coding/wechat-local-service-kit/out/accounts/customer-asset-signals/高置信客户微信资产加分表.csv';
+const WECHAT_ASSET_SCORE_FILE = path.resolve(ROOT, process.env.WECHAT_ASSET_SCORE_FILE || DEFAULT_WECHAT_ASSET_SCORE_FILE);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ACTION_WINDOW_DAYS = 14;
 const RECOMMENDATION_SKU_WINDOW_DAYS = 60;
@@ -23,6 +25,29 @@ const ACTIVE_EMPLOYEES = new Set(['谷佳', '雅琴', '黄蓉']);
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function parseCsvLine(line) {
+  const cells = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    const next = line[i + 1];
+    if (ch === '"' && inQuotes && next === '"') {
+      current += '"';
+      i += 1;
+    } else if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  return cells;
 }
 
 function writeJsonAtomically(targetPath, tmpPath, content) {
@@ -50,6 +75,84 @@ function toNumber(value) {
   if (!cleaned) return null;
   const result = Number(cleaned);
   return Number.isNaN(result) ? null : result;
+}
+
+function toBool(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return raw === 'true' || raw === '1' || raw === '是' || raw === 'yes';
+}
+
+function splitList(value) {
+  return String(value || '')
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function loadWechatAssetMap() {
+  const empty = {
+    source_path: WECHAT_ASSET_SCORE_FILE,
+    loaded: false,
+    count: 0,
+    byPhone: new Map(),
+  };
+  if (!fs.existsSync(WECHAT_ASSET_SCORE_FILE)) return empty;
+
+  const raw = fs.readFileSync(WECHAT_ASSET_SCORE_FILE, 'utf8').replace(/^\uFEFF/, '');
+  const lines = raw.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return { ...empty, loaded: true };
+
+  const headers = parseCsvLine(lines[0]).map(header => header.replace(/^\uFEFF/, '').trim());
+  const byPhone = new Map();
+  for (const line of lines.slice(1)) {
+    const cells = parseCsvLine(line);
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = cells[index] || '';
+    });
+    const phone = normalizePhone(row['客户手机号']);
+    if (!phone) continue;
+    const boost = toNumber(row['建议微信资产加分']) || 0;
+    const current = byPhone.get(phone);
+    const asset = {
+      phone,
+      customer_name: text(row['客户名称']),
+      platform: text(row['下单平台']),
+      source_priority_score: toNumber(row['当前优先分']),
+      boost,
+      source_adjusted_score: toNumber(row['建议调整后优先分']),
+      session_count: toNumber(row['微信资产会话数']) || 0,
+      account_count: toNumber(row['资产账号数']) || 0,
+      labels: splitList(row['资产分层汇总']),
+      label_summary: text(row['资产分层汇总']),
+      temperature: text(row['最高互动温度']),
+      has_waitlist: toBool(row['是否明确蹲货']),
+      has_out_of_stock: toBool(row['是否缺货断码咨询']),
+      has_price_sensitive: toBool(row['是否价格敏感']),
+      has_quote_no_reply: toBool(row['是否报价后未回']),
+      has_cold_followup: toBool(row['是否发了不回']),
+      has_recent_decline: toBool(row['是否近期暂不需要']),
+      has_active_intent: toBool(row['是否回复积极']),
+      last_customer_message_at: text(row['最近客户消息时间']),
+      display_names: splitList(row['微信备注_display_name列表']),
+      nicknames: splitList(row['微信昵称_nickname列表']),
+      raw_wechat_ids: splitList(row['微信原始ID列表']),
+      aliases: splitList(row['微信号/alias列表']),
+      evidence: text(row['关键聊天证据']),
+      recent_snippet: text(row['最近聊天片段']),
+      conversation_path: text(row['聊天记录路径']),
+    };
+    if (!current || asset.boost > current.boost) {
+      byPhone.set(phone, asset);
+    }
+  }
+
+  return {
+    source_path: WECHAT_ASSET_SCORE_FILE,
+    loaded: true,
+    count: byPhone.size,
+    byPhone,
+  };
 }
 
 function parseDate(value) {
@@ -435,6 +538,7 @@ function main() {
   const recommendationSkuWindow = buildTrailingWindow(latestDate, RECOMMENDATION_SKU_WINDOW_DAYS);
   const laggedReturnWindow = buildLaggedWindow(latestDate);
   const birthdaySource = loadBirthdayMap(latestDate);
+  const wechatAssetSource = loadWechatAssetMap();
   const customers = new Map();
   const skuRecentStats = new Map();
   const skuRateStats = new Map();
@@ -589,6 +693,8 @@ function main() {
       const birthdayNear = !!birthday?.birthday_is_near;
 
       const isVeryRecentOrder = daysSinceLastOrder != null && daysSinceLastOrder < VERY_RECENT_ORDER_DAYS;
+      const wechatAsset = profile.phone ? wechatAssetSource.byPhone.get(profile.phone) : null;
+      const wechatAssetBoost = wechatAsset ? wechatAsset.boost : 0;
 
       let score = 0;
       if (timing.window_state === 'ready') score += 30;
@@ -644,6 +750,7 @@ function main() {
         : 0;
       const birthdayBonusScore = birthdayNear && timing.window_state !== 'cooldown' ? 10 : 0;
       const recentOrderPenaltyScore = isVeryRecentOrder ? -25 : 0;
+      const priorityScoreWithWechat = score + wechatAssetBoost;
 
       let priorityTier = 'P2';
       let actionType = 'recall';
@@ -682,6 +789,7 @@ function main() {
         return_rate_180d: returnRate180dScore,
         birthday_bonus: birthdayBonusScore,
         recent_order_penalty: recentOrderPenaltyScore,
+        wechat_asset_boost: wechatAssetBoost,
         priority_tier: priorityTier,
         action_type: actionType,
       };
@@ -869,13 +977,18 @@ function main() {
         birthday_style_preferences: birthdayStyleTags,
         birthday_expected_gift: birthday?.expected_gift || null,
         score_breakdown: scoreBreakdown,
+        priority_score_base: score,
+        priority_score_with_wechat: priorityScoreWithWechat,
+        wechat_asset_boost: wechatAssetBoost,
+        has_wechat_asset: !!wechatAsset,
+        wechat_asset: wechatAsset,
         priority_score: score,
         priority_tier: priorityTier,
         action_type: actionType,
         action_reason: actionReason,
       };
     })
-    .sort((a, b) => b.priority_score - a.priority_score || (a.days_since_last_order ?? 9999) - (b.days_since_last_order ?? 9999));
+    .sort((a, b) => (b.priority_score_with_wechat ?? b.priority_score) - (a.priority_score_with_wechat ?? a.priority_score) || (a.days_since_last_order ?? 9999) - (b.days_since_last_order ?? 9999));
 
   const summary = outputCustomers.reduce(
     (acc, customer) => {
@@ -887,15 +1000,23 @@ function main() {
         ? customer.revenue_180d
         : 0;
       acc.birthday_near += customer.birthday_is_near ? 1 : 0;
+      acc.wechat_asset_customers += customer.has_wechat_asset ? 1 : 0;
+      acc.wechat_asset_positive += customer.wechat_asset_boost > 0 ? 1 : 0;
+      acc.wechat_asset_negative += customer.wechat_asset_boost < 0 ? 1 : 0;
       return acc;
     },
-    { p0_today: 0, p1_upsell: 0, p2_recall: 0, risk_watch: 0, expected_opportunity: 0, birthday_near: 0 }
+    { p0_today: 0, p1_upsell: 0, p2_recall: 0, risk_watch: 0, expected_opportunity: 0, birthday_near: 0, wechat_asset_customers: 0, wechat_asset_positive: 0, wechat_asset_negative: 0 }
   );
 
   const result = {
     generated_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
     source_synced_at: source.synced_at,
     birthday_source_synced_at: birthdaySource.synced_at,
+    wechat_asset_source: {
+      loaded: wechatAssetSource.loaded,
+      source_path: wechatAssetSource.source_path,
+      customer_count: wechatAssetSource.count,
+    },
     window_days: ACTION_WINDOW_DAYS,
     return_rate_lag_days: RETURN_RATE_LAG_DAYS,
     summary,

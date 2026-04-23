@@ -15,9 +15,13 @@ customer_action_data.json
 birthday_members.json
 meeting_summary.json
 duty_schedule.json
+ai_assets.json
 full_orders.json
 danhaodata.json
 *.tmp.json
+output/ai-materials/
+output/*.png
+output/gpt-image-2-short-prompts/
 
 # Node / OS artifacts
 node_modules/

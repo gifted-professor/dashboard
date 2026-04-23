@@ -86,6 +86,11 @@ function hasWorkflowText(value) {
   return !!(raw && raw !== '/' && raw !== '-' && raw !== '—');
 }
 
+function hasReturnTracking(value) {
+  const raw = text(value);
+  return !!(raw && raw !== '-' && raw !== '—');
+}
+
 function parseWorkflowDate(value) {
   if (!hasWorkflowText(value)) return null;
   const date = parseDate(value);
@@ -123,7 +128,7 @@ function buildWorkflowAlert(record, latestDate, ageDate, extra = {}) {
     factory: text(record.factory) || '未知',
     refund_type: text(record.refund_type),
     pay_date: text(record.pay_date),
-    return_tracking: hasWorkflowText(record.return_tracking) ? text(record.return_tracking) : null,
+    return_tracking: hasReturnTracking(record.return_tracking) ? text(record.return_tracking) : null,
     send_factory_date: workflowDateText(record.send_factory_date),
     confirm_date: workflowDateText(record.confirm_date),
     refund_amount: toNumber(record.refund_amount),
@@ -134,13 +139,13 @@ function buildWorkflowAlert(record, latestDate, ageDate, extra = {}) {
 }
 
 function isMissingReturnTracking(record) {
-  return isReturnWorkflowOrder(record) && !hasWorkflowText(record.return_tracking);
+  return isReturnWorkflowOrder(record) && !hasReturnTracking(record.return_tracking);
 }
 
 function isPendingSendFactory(record, latestDate) {
   if (!isReturnWorkflowOrder(record)) return false;
   if (EXCLUDED_PENDING_SEND_FACTORIES.has(text(record.factory) || '')) return false;
-  if (!hasWorkflowText(record.return_tracking)) return false;
+  if (!hasReturnTracking(record.return_tracking)) return false;
   if (hasWorkflowText(record.send_factory_date)) return false;
   const ageDays = daysSince(workflowAlertDate(record), latestDate);
   return ageDays != null && ageDays > 7;
@@ -269,6 +274,32 @@ function getDutyDayMap(source, window) {
   return dutyDays;
 }
 
+function getDutyCoverageSummary(source, window) {
+  const rawRecords = Array.isArray(source?.records) ? source.records : [];
+  const coveredDates = new Set();
+  const expectedDays = Math.floor((window.end.getTime() - window.start.getTime()) / DAY_MS) + 1;
+
+  for (const record of rawRecords) {
+    const employee = text(record.employee);
+    if (!employee || !ACTIVE_EMPLOYEES.has(employee)) continue;
+
+    const date = parseDate(record.duty_date);
+    if (!date) continue;
+    date.setHours(0, 0, 0, 0);
+
+    if (!isInWindow(date, window)) continue;
+    coveredDates.add(toDateKey(date));
+  }
+
+  const coveredDays = coveredDates.size;
+  return {
+    covered_days: coveredDays,
+    expected_days: expectedDays,
+    is_complete: coveredDays >= expectedDays,
+    covered_dates: Array.from(coveredDates).sort(),
+  };
+}
+
 function ensureStat(map, key, seed) {
   if (!map.has(key)) map.set(key, { ...seed });
   return map.get(key);
@@ -296,6 +327,7 @@ function main() {
   const riskWindow = buildTrailingWindow(latestDate, RISK_WINDOW_DAYS);
   const returnRateWindow = buildReturnRateWindow(latestDate);
   const dutyDayMap = getDutyDayMap(dutySource, recentWindow);
+  const dutyCoverage = getDutyCoverageSummary(dutySource, recentWindow);
 
   const skuStats = new Map();
   const skuRateStats = new Map();
@@ -467,7 +499,9 @@ function main() {
       const rateStat = employeeRateStats.get(item.name) || { orders: 0, returns: 0 };
       const returnRate = rateStat.orders > 0 ? (rateStat.returns / rateStat.orders) * 100 : 0;
       const dutyDays = dutyDayMap.get(item.name)?.size || 0;
-      const avgDailyOrders = dutyDays > 0 ? Number((item.orders / dutyDays).toFixed(1)) : null;
+      const avgDailyOrders = dutyCoverage.is_complete && dutyDays > 0
+        ? Number((item.orders / dutyDays).toFixed(1))
+        : null;
       return {
         name: item.name,
         orders: item.orders,
@@ -475,6 +509,7 @@ function main() {
         returns: item.returns,
         duty_days: dutyDays,
         avg_daily_orders: avgDailyOrders,
+        avg_daily_orders_available: dutyCoverage.is_complete && dutyDays > 0,
         sales_avg_profit_margin: item.profit_margin_count > 0 ? Number((item.profit_margin_sum / item.profit_margin_count * 100).toFixed(1)) : 0,
         monthly_promo_orders: item.monthly_promo_orders || 0,
         return_rate: Number(returnRate.toFixed(1)),
@@ -636,6 +671,14 @@ function main() {
     return_alerts: returnAlerts,
     daily_trend: dailyTrend,
     employees,
+    data_quality: {
+      avg_daily_orders: {
+        ...dutyCoverage,
+        note: dutyCoverage.is_complete
+          ? null
+          : `值班表仅覆盖 ${dutyCoverage.covered_days}/${dutyCoverage.expected_days} 天，日均单量暂不展示`,
+      },
+    },
     team_summary: teamSummary,
     factories,
     risk_summary: riskSummary,

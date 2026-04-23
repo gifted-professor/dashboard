@@ -6,9 +6,12 @@
   "scripts": {
     "sync": "node sync_danhao.js",
     "build:dashboard": "node build_dashboard_data.js",
+    "build:wechat-assets": "cd /Volumes/GPFS/Users/a1234/Desktop/Coding/wechat-local-service-kit && python3 scripts/build_customer_asset_signal_report.py --accounts-root out/accounts --out-root out/accounts/customer-asset-signals",
     "build:customer": "node build_customer_action_data.js",
+    "build:customer:wechat": "npm run build:wechat-assets && npm run build:customer",
     "build": "npm run build:dashboard && npm run build:customer",
     "refresh": "npm run sync && npm run build",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "ensure:serve": "python3 scripts/ensure_dashboard_server.py"
   }
 }

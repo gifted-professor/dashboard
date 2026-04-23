@@ -16,6 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build` — run both build steps
 - `npm run refresh` — sync first, then rebuild both derived JSON files
 - `npm run serve` — start the local dashboard server on `http://127.0.0.1:8899` by default (now also serves the local AI proxy endpoints under `/api/ai/*`)
+- `npm run ensure:serve` — health-check `http://127.0.0.1:8899`; if healthy, report it, otherwise start/restart the dashboard server and report the result
 - Update weekly meeting content by editing `meeting_summary.json`, then refresh the page; no sync/build step is required for that panel.
 - The AI `生成得物` tool defaults to the local CLIProxyAPI setup on this machine: `http://127.0.0.1:8317` + `Bearer cliproxyapi-local` + model `gemini-3.1-flash-image`. `.env` only needs overrides when using a different proxy/model/base image path.
 
@@ -59,14 +60,14 @@ orders_realtime.json + birthday_members.json
 
 server.js
   -> serves index.html + the generated JSON files
-  -> proxies local AI requests at `/api/ai/dewu/config` and `/api/ai/dewu/generate`
+  -> proxies local AI requests at `/api/ai/dewu/config`, `/api/ai/dewu/generate`, and `/api/ai/image/generate`
 
 index.html
   -> fetches orders_realtime.json for order search/history
   -> fetches dashboard_data.json for overview/risk/team metrics
   -> fetches customer_action_data.json for customer prioritization/actions
   -> fetches meeting_summary.json for the weekly meeting-summary action panel
-  -> calls the local AI endpoints for the `AI 工具 -> 生成得物` flow
+  -> calls the local AI endpoints for both `AI 工具 -> 自由生图` and `AI 工具 -> 生成得物`
 ```
 
 ### Sync layer: schema boundary and raw data normalization
